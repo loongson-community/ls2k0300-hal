@@ -41,6 +41,7 @@ extern "C" {
   * @brief This is the list of modules to be used in the HAL driver
   */
 #define HAL_MODULE_ENABLED
+#define HAL_GPIO_MODULE_ENABLED
 
 /**
   * @brief APB value.
@@ -66,6 +67,10 @@ extern "C" {
 /**
   * @brief Include module's header file
   */
+
+#ifdef HAL_GPIO_MODULE_ENABLED
+#include "ls2k03xx_hal_gpio.h"
+#endif /* HAL_GPIO_MODULE_ENABLED */
 
 /* Exported macro ------------------------------------------------------------*/
 #ifdef  USE_FULL_ASSERT
