@@ -1,12 +1,14 @@
 /**
   ******************************************************************************
-  * @file    system_stm32f1xx.h
+  * @file    system_ls2k03xx.h
   * @author  MCD Application Team
-  * @brief   CMSIS Cortex-M3 Device Peripheral Access Layer System Header File.
+  * @author  Ilikara <3435193369@qq.com> (Ported for LS2K03xx)
+  * @brief   LSSIS LS2K03xx Device Peripheral Access Layer System Header File.
   ******************************************************************************
   * @attention
   *
   * Copyright (c) 2017-2021 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -16,25 +18,26 @@
   ******************************************************************************
   */
 
-/** @addtogroup CMSIS
+/** @addtogroup LSSIS
   * @{
   */
 
-/** @addtogroup stm32f10x_system
+/** @addtogroup ls2k030x_system
   * @{
   */  
-  
+
 /**
   * @brief Define to prevent recursive inclusion
   */
-#ifndef __SYSTEM_STM32F10X_H
-#define __SYSTEM_STM32F10X_H
+#ifndef __SYSTEM_LS2K030X_H
+#define __SYSTEM_LS2K030X_H
 
+#include <stdint.h>
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif 
 
-/** @addtogroup STM32F10x_System_Includes
+/** @addtogroup LS2K030x_System_Includes
   * @{
   */
 
@@ -43,19 +46,17 @@
   */
 
 
-/** @addtogroup STM32F10x_System_Exported_types
+/** @addtogroup LS2K030x_System_Exported_types
   * @{
   */
 
 extern uint32_t SystemCoreClock;          /*!< System Clock Frequency (Core Clock) */
-extern const uint8_t  AHBPrescTable[16U];  /*!< AHB prescalers table values */
-extern const uint8_t  APBPrescTable[8U];   /*!< APB prescalers table values */
 
 /**
   * @}
   */
 
-/** @addtogroup STM32F10x_System_Exported_Constants
+/** @addtogroup LS2K030x_System_Exported_Constants
   * @{
   */
 
@@ -63,7 +64,7 @@ extern const uint8_t  APBPrescTable[8U];   /*!< APB prescalers table values */
   * @}
   */
 
-/** @addtogroup STM32F10x_System_Exported_Macros
+/** @addtogroup LS2K030x_System_Exported_Macros
   * @{
   */
 
@@ -71,10 +72,10 @@ extern const uint8_t  APBPrescTable[8U];   /*!< APB prescalers table values */
   * @}
   */
 
-/** @addtogroup STM32F10x_System_Exported_Functions
+/** @addtogroup LS2K030x_System_Exported_Functions
   * @{
   */
-  
+
 extern void SystemInit(void);
 extern void SystemCoreClockUpdate(void);
 /**
@@ -85,12 +86,12 @@ extern void SystemCoreClockUpdate(void);
 }
 #endif
 
-#endif /*__SYSTEM_STM32F10X_H */
+#endif /*__SYSTEM_LS2K030X_H */
 
 /**
   * @}
   */
-  
+
 /**
   * @}
   */
