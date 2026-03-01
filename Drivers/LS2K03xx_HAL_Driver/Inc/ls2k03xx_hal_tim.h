@@ -1,12 +1,14 @@
 /**
   ******************************************************************************
-  * @file    stm32f1xx_hal_tim.h
-  * @author  MCD Application Team
+  * @file    ls2k03xx_hal_tim.h
+  * @author  MCD Application Team (Original STM32 HAL)
+  * @author  Ilikara <3435193369@qq.com> (Ported for LS2K03xx)
   * @brief   Header file of TIM HAL module.
   ******************************************************************************
   * @attention
   *
   * Copyright (c) 2016 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -14,20 +16,25 @@
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
+  * @note
+  * This file is based on STM32 HAL library, ported and modified for 
+  * Loongson LS2K03xx series processors.
+  *
+  ******************************************************************************
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef STM32F1xx_HAL_TIM_H
-#define STM32F1xx_HAL_TIM_H
+#ifndef LS2K03xx_HAL_TIM_H
+#define LS2K03xx_HAL_TIM_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal_def.h"
+#include "ls2k03xx_hal_def.h"
 
-/** @addtogroup STM32F1xx_HAL_Driver
+/** @addtogroup LS2K03xx_HAL_Driver
   * @{
   */
 
@@ -341,8 +348,6 @@ typedef struct
   TIM_TypeDef                        *Instance;         /*!< Register base address                             */
   TIM_Base_InitTypeDef               Init;              /*!< TIM Time Base required parameters                 */
   HAL_TIM_ActiveChannel              Channel;           /*!< Active channel                                    */
-  DMA_HandleTypeDef                  *hdma[7];          /*!< DMA Handlers array
-                                                             This array is accessed by a @ref DMA_Handle_index */
   HAL_LockTypeDef                    Lock;              /*!< Locking object                                    */
   __IO HAL_TIM_StateTypeDef          State;             /*!< TIM operation state                               */
   __IO HAL_TIM_ChannelStateTypeDef   ChannelState[4];   /*!< TIM channel operation state                       */
@@ -1870,7 +1875,7 @@ typedef  void (*pTIM_CallbackTypeDef)(TIM_HandleTypeDef *htim);  /*!< pointer to
 /* End of private macros -----------------------------------------------------*/
 
 /* Include TIM HAL Extended module */
-#include "stm32f1xx_hal_tim_ex.h"
+#include "ls2k03xx_hal_tim_ex.h"
 
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup TIM_Exported_Functions TIM Exported Functions
@@ -1889,12 +1894,6 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIM_Base_Start(TIM_HandleTypeDef *htim);
 HAL_StatusTypeDef HAL_TIM_Base_Stop(TIM_HandleTypeDef *htim);
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIM_Base_Start_IT(TIM_HandleTypeDef *htim);
-HAL_StatusTypeDef HAL_TIM_Base_Stop_IT(TIM_HandleTypeDef *htim);
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIM_Base_Start_DMA(TIM_HandleTypeDef *htim, const uint32_t *pData, uint16_t Length);
-HAL_StatusTypeDef HAL_TIM_Base_Stop_DMA(TIM_HandleTypeDef *htim);
 /**
   * @}
   */
@@ -1911,13 +1910,6 @@ void HAL_TIM_OC_MspDeInit(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIM_OC_Start(TIM_HandleTypeDef *htim, uint32_t Channel);
 HAL_StatusTypeDef HAL_TIM_OC_Stop(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIM_OC_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-HAL_StatusTypeDef HAL_TIM_OC_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIM_OC_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, const uint32_t *pData,
-                                       uint16_t Length);
-HAL_StatusTypeDef HAL_TIM_OC_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel);
 /**
   * @}
   */
@@ -1934,13 +1926,6 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIM_PWM_Start(TIM_HandleTypeDef *htim, uint32_t Channel);
 HAL_StatusTypeDef HAL_TIM_PWM_Stop(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIM_PWM_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-HAL_StatusTypeDef HAL_TIM_PWM_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, const uint32_t *pData,
-                                        uint16_t Length);
-HAL_StatusTypeDef HAL_TIM_PWM_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel);
 /**
   * @}
   */
@@ -1957,12 +1942,6 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIM_IC_Start(TIM_HandleTypeDef *htim, uint32_t Channel);
 HAL_StatusTypeDef HAL_TIM_IC_Stop(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIM_IC_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-HAL_StatusTypeDef HAL_TIM_IC_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIM_IC_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Length);
-HAL_StatusTypeDef HAL_TIM_IC_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel);
 /**
   * @}
   */
@@ -1979,9 +1958,6 @@ void HAL_TIM_OnePulse_MspDeInit(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIM_OnePulse_Start(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
 HAL_StatusTypeDef HAL_TIM_OnePulse_Stop(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIM_OnePulse_Start_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
-HAL_StatusTypeDef HAL_TIM_OnePulse_Stop_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
 /**
   * @}
   */
@@ -1998,13 +1974,6 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIM_Encoder_Start(TIM_HandleTypeDef *htim, uint32_t Channel);
 HAL_StatusTypeDef HAL_TIM_Encoder_Stop(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIM_Encoder_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-HAL_StatusTypeDef HAL_TIM_Encoder_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIM_Encoder_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData1,
-                                            uint32_t *pData2, uint16_t Length);
-HAL_StatusTypeDef HAL_TIM_Encoder_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel);
 /**
   * @}
   */
@@ -2038,20 +2007,6 @@ HAL_StatusTypeDef HAL_TIM_ConfigOCrefClear(TIM_HandleTypeDef *htim,
 HAL_StatusTypeDef HAL_TIM_ConfigClockSource(TIM_HandleTypeDef *htim, const TIM_ClockConfigTypeDef *sClockSourceConfig);
 HAL_StatusTypeDef HAL_TIM_ConfigTI1Input(TIM_HandleTypeDef *htim, uint32_t TI1_Selection);
 HAL_StatusTypeDef HAL_TIM_SlaveConfigSynchro(TIM_HandleTypeDef *htim, const TIM_SlaveConfigTypeDef *sSlaveConfig);
-HAL_StatusTypeDef HAL_TIM_SlaveConfigSynchro_IT(TIM_HandleTypeDef *htim, const TIM_SlaveConfigTypeDef *sSlaveConfig);
-HAL_StatusTypeDef HAL_TIM_DMABurst_WriteStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
-                                              uint32_t BurstRequestSrc, const uint32_t  *BurstBuffer,
-                                              uint32_t  BurstLength);
-HAL_StatusTypeDef HAL_TIM_DMABurst_MultiWriteStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
-                                                   uint32_t BurstRequestSrc, const uint32_t *BurstBuffer,
-                                                   uint32_t BurstLength,  uint32_t DataLength);
-HAL_StatusTypeDef HAL_TIM_DMABurst_WriteStop(TIM_HandleTypeDef *htim, uint32_t BurstRequestSrc);
-HAL_StatusTypeDef HAL_TIM_DMABurst_ReadStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
-                                             uint32_t BurstRequestSrc, uint32_t  *BurstBuffer, uint32_t  BurstLength);
-HAL_StatusTypeDef HAL_TIM_DMABurst_MultiReadStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
-                                                  uint32_t BurstRequestSrc, uint32_t  *BurstBuffer,
-                                                  uint32_t  BurstLength, uint32_t  DataLength);
-HAL_StatusTypeDef HAL_TIM_DMABurst_ReadStop(TIM_HandleTypeDef *htim, uint32_t BurstRequestSrc);
 HAL_StatusTypeDef HAL_TIM_GenerateEvent(TIM_HandleTypeDef *htim, uint32_t EventSource);
 uint32_t HAL_TIM_ReadCapturedValue(const TIM_HandleTypeDef *htim, uint32_t Channel);
 /**
@@ -2120,10 +2075,6 @@ void TIM_OC2_SetConfig(TIM_TypeDef *TIMx, const TIM_OC_InitTypeDef *OC_Config);
 void TIM_ETR_SetConfig(TIM_TypeDef *TIMx, uint32_t TIM_ExtTRGPrescaler,
                        uint32_t TIM_ExtTRGPolarity, uint32_t ExtTRGFilter);
 
-void TIM_DMADelayPulseHalfCplt(DMA_HandleTypeDef *hdma);
-void TIM_DMAError(DMA_HandleTypeDef *hdma);
-void TIM_DMACaptureCplt(DMA_HandleTypeDef *hdma);
-void TIM_DMACaptureHalfCplt(DMA_HandleTypeDef *hdma);
 void TIM_CCxChannelCmd(TIM_TypeDef *TIMx, uint32_t Channel, uint32_t ChannelState);
 
 #if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
@@ -2147,4 +2098,4 @@ void TIM_ResetCallback(TIM_HandleTypeDef *htim);
 }
 #endif
 
-#endif /* STM32F1xx_HAL_TIM_H */
+#endif /* LS2K03xx_HAL_TIM_H */

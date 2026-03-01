@@ -42,6 +42,7 @@ extern "C" {
   */
 #define HAL_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
+#define HAL_TIM_MODULE_ENABLED
 
 /**
   * @brief APB value.
@@ -55,6 +56,8 @@ extern "C" {
   * @brief This is the HAL system configuration section
   */
 #define  USE_RTOS                     0U
+
+#define  USE_HAL_TIM_REGISTER_CALLBACKS         0U /* TIM register callback disabled       */
 
 /* ########################## Assert Selection ############################## */
 /**
@@ -71,6 +74,10 @@ extern "C" {
 #ifdef HAL_GPIO_MODULE_ENABLED
 #include "ls2k03xx_hal_gpio.h"
 #endif /* HAL_GPIO_MODULE_ENABLED */
+
+#ifdef HAL_TIM_MODULE_ENABLED
+#include "ls2k03xx_hal_tim.h"
+#endif /* HAL_TIM_MODULE_ENABLED */
 
 /* Exported macro ------------------------------------------------------------*/
 #ifdef  USE_FULL_ASSERT

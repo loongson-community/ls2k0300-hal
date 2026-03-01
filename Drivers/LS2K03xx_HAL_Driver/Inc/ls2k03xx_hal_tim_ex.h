@@ -1,12 +1,14 @@
 /**
   ******************************************************************************
-  * @file    stm32f1xx_hal_tim_ex.h
-  * @author  MCD Application Team
+  * @file    ls2k03xx_hal_tim_ex.h
+  * @author  MCD Application Team (Original STM32 HAL)
+  * @author  Ilikara <3435193369@qq.com> (Ported for LS2K03xx)
   * @brief   Header file of TIM HAL Extended module.
   ******************************************************************************
   * @attention
   *
   * Copyright (c) 2016 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -14,20 +16,25 @@
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
+  * @note
+  * This file is based on STM32 HAL library, ported and modified for 
+  * Loongson LS2K03xx series processors.
+  *
+  ******************************************************************************
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef STM32F1xx_HAL_TIM_EX_H
-#define STM32F1xx_HAL_TIM_EX_H
+#ifndef LS2K03xx_HAL_TIM_EX_H
+#define LS2K03xx_HAL_TIM_EX_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal_def.h"
+#include "ls2k03xx_hal_def.h"
 
-/** @addtogroup STM32F1xx_HAL_Driver
+/** @addtogroup LS2K03xx_HAL_Driver
   * @{
   */
 
@@ -119,12 +126,6 @@ void HAL_TIMEx_HallSensor_MspDeInit(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start(TIM_HandleTypeDef *htim);
 HAL_StatusTypeDef HAL_TIMEx_HallSensor_Stop(TIM_HandleTypeDef *htim);
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start_IT(TIM_HandleTypeDef *htim);
-HAL_StatusTypeDef HAL_TIMEx_HallSensor_Stop_IT(TIM_HandleTypeDef *htim);
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIMEx_HallSensor_Start_DMA(TIM_HandleTypeDef *htim, uint32_t *pData, uint16_t Length);
-HAL_StatusTypeDef HAL_TIMEx_HallSensor_Stop_DMA(TIM_HandleTypeDef *htim);
 /**
   * @}
   */
@@ -137,15 +138,6 @@ HAL_StatusTypeDef HAL_TIMEx_HallSensor_Stop_DMA(TIM_HandleTypeDef *htim);
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIMEx_OCN_Start(TIM_HandleTypeDef *htim, uint32_t Channel);
 HAL_StatusTypeDef HAL_TIMEx_OCN_Stop(TIM_HandleTypeDef *htim, uint32_t Channel);
-
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIMEx_OCN_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-HAL_StatusTypeDef HAL_TIMEx_OCN_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIMEx_OCN_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, const uint32_t *pData,
-                                          uint16_t Length);
-HAL_StatusTypeDef HAL_TIMEx_OCN_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel);
 /**
   * @}
   */
@@ -158,14 +150,6 @@ HAL_StatusTypeDef HAL_TIMEx_OCN_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Chann
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIMEx_PWMN_Start(TIM_HandleTypeDef *htim, uint32_t Channel);
 HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop(TIM_HandleTypeDef *htim, uint32_t Channel);
-
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIMEx_PWMN_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel);
-/* Non-Blocking mode: DMA */
-HAL_StatusTypeDef HAL_TIMEx_PWMN_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, const uint32_t *pData,
-                                           uint16_t Length);
-HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel);
 /**
   * @}
   */
@@ -178,10 +162,6 @@ HAL_StatusTypeDef HAL_TIMEx_PWMN_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Chan
 /* Blocking mode: Polling */
 HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Start(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
 HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Stop(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
-
-/* Non-Blocking mode: Interrupt */
-HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Start_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
-HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Stop_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel);
 /**
   * @}
   */
@@ -193,10 +173,6 @@ HAL_StatusTypeDef HAL_TIMEx_OnePulseN_Stop_IT(TIM_HandleTypeDef *htim, uint32_t 
 /* Extended Control functions  ************************************************/
 HAL_StatusTypeDef HAL_TIMEx_ConfigCommutEvent(TIM_HandleTypeDef *htim, uint32_t  InputTrigger,
                                               uint32_t  CommutationSource);
-HAL_StatusTypeDef HAL_TIMEx_ConfigCommutEvent_IT(TIM_HandleTypeDef *htim, uint32_t  InputTrigger,
-                                                 uint32_t  CommutationSource);
-HAL_StatusTypeDef HAL_TIMEx_ConfigCommutEvent_DMA(TIM_HandleTypeDef *htim, uint32_t  InputTrigger,
-                                                  uint32_t  CommutationSource);
 HAL_StatusTypeDef HAL_TIMEx_MasterConfigSynchronization(TIM_HandleTypeDef *htim,
                                                         const TIM_MasterConfigTypeDef *sMasterConfig);
 HAL_StatusTypeDef HAL_TIMEx_ConfigBreakDeadTime(TIM_HandleTypeDef *htim,
@@ -238,8 +214,6 @@ HAL_TIM_ChannelStateTypeDef HAL_TIMEx_GetChannelNState(const TIM_HandleTypeDef *
 /** @addtogroup TIMEx_Private_Functions TIM Extended Private Functions
   * @{
   */
-void TIMEx_DMACommutationCplt(DMA_HandleTypeDef *hdma);
-void TIMEx_DMACommutationHalfCplt(DMA_HandleTypeDef *hdma);
 /**
   * @}
   */
@@ -258,4 +232,4 @@ void TIMEx_DMACommutationHalfCplt(DMA_HandleTypeDef *hdma);
 #endif
 
 
-#endif /* STM32F1xx_HAL_TIM_EX_H */
+#endif /* LS2K03xx_HAL_TIM_EX_H */
