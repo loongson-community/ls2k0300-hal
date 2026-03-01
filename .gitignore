@@ -1,0 +1,10 @@
+Doxyfile
+html
+latex
+
+.cache
+.vscode
+
+build
+
+compile_commands.json
