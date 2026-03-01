@@ -1,0 +1,91 @@
+/**
+  ******************************************************************************
+  * @file    ls2k03xx_hal_conf.h
+  * @author  MCD Application Team (Original STM32 HAL)
+  * @author  Ilikara <3435193369@qq.com> (Ported for LS2K03xx)
+  * @brief   HAL configuration template file.
+  *          This file should be copied to the application folder and renamed
+  *          to ls2k03xx_hal_conf.h.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  * @note
+  * This file is based on STM32 HAL library, ported and modified for 
+  * Loongson LS2K03xx series processors.
+  *
+  ******************************************************************************
+  */
+
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __LS2K03xx_HAL_CONF_H
+#define __LS2K03xx_HAL_CONF_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Exported types ------------------------------------------------------------*/
+/* Exported constants --------------------------------------------------------*/
+
+/* ########################## Module Selection ############################## */
+/**
+  * @brief This is the list of modules to be used in the HAL driver
+  */
+#define HAL_MODULE_ENABLED
+
+/**
+  * @brief APB value.
+  */
+#if !defined  (APB_FREQ)
+#define APB_FREQ              200000000U  /*!< Value in Hz */
+#endif /* APB_FREQ */
+
+/* ########################### System Configuration ######################### */
+/**
+  * @brief This is the HAL system configuration section
+  */
+#define  USE_RTOS                     0U
+
+/* ########################## Assert Selection ############################## */
+/**
+  * @brief Uncomment the line below to expanse the "assert_param" macro in the
+  *        HAL drivers code
+  */
+/* #define USE_FULL_ASSERT    1U */
+
+/* Includes ------------------------------------------------------------------*/
+/**
+  * @brief Include module's header file
+  */
+
+/* Exported macro ------------------------------------------------------------*/
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  The assert_param macro is used for function's parameters check.
+  * @param  expr If expr is false, it calls assert_failed function
+  *         which reports the name of the source file and the source
+  *         line number of the call that failed.
+  *         If expr is true, it returns no value.
+  * @retval None
+  */
+#define assert_param(expr) ((expr) ? (void)0U : assert_failed((uint8_t *)__FILE__, __LINE__))
+/* Exported functions ------------------------------------------------------- */
+void assert_failed(uint8_t* file, uint32_t line);
+#else
+#define assert_param(expr) ((void)0U)
+#endif /* USE_FULL_ASSERT */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __LS2K03xx_HAL_CONF_H */
