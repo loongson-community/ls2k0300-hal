@@ -43,6 +43,7 @@ extern "C" {
 #define HAL_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
+#define HAL_UART_MODULE_ENABLED
 
 /**
   * @brief APB value.
@@ -58,6 +59,7 @@ extern "C" {
 #define  USE_RTOS                     0U
 
 #define  USE_HAL_TIM_REGISTER_CALLBACKS         0U /* TIM register callback disabled       */
+#define  USE_HAL_UART_REGISTER_CALLBACKS        0U /* UART register callback disabled      */
 
 /* ########################## Assert Selection ############################## */
 /**
@@ -78,6 +80,10 @@ extern "C" {
 #ifdef HAL_TIM_MODULE_ENABLED
 #include "ls2k03xx_hal_tim.h"
 #endif /* HAL_TIM_MODULE_ENABLED */
+
+#ifdef HAL_UART_MODULE_ENABLED
+#include "ls2k03xx_hal_uart.h"
+#endif /* HAL_UART_MODULE_ENABLED */
 
 /* Exported macro ------------------------------------------------------------*/
 #ifdef  USE_FULL_ASSERT
