@@ -29,13 +29,13 @@ boot_from_uboot: // PC 在 dmw 窗口
 // 所以理论上我可以直接跳转到初始化函数
 
 /* Call the clock system initialization function.*/
-  bl  SystemInit
+	bl  SystemInit
 
 /* Copy the data segment initializers from flash to SRAM */
-  la.local t0, _sidata
-  la.local t1, _sdata
-  la.local t2, _edata
-  b LoopCopyDataInit
+	la.local t0, _sidata
+	la.local t1, _sdata
+	la.local t2, _edata
+	b LoopCopyDataInit
 
 LoopCopyDataInit:
 	ld.w	t3, t0, 0
@@ -45,10 +45,10 @@ LoopCopyDataInit:
 	blt	t1, t2, LoopCopyDataInit
 
 /* Copy the small data segment initializers from flash to SRAM */
-  la.local t0, _sisdata
-  la.local t1, _ssdata
-  la.local t2, _esdata
-  b LoopCopySmallDataInit
+	la.local t0, _sisdata
+	la.local t1, _ssdata
+	la.local t2, _esdata
+	b LoopCopySmallDataInit
 
 LoopCopySmallDataInit:
 	ld.w	t3, t0, 0
@@ -58,10 +58,10 @@ LoopCopySmallDataInit:
 	blt	t1, t2, LoopCopySmallDataInit
 
 /* Copy the GOT initializers from flash to SRAM */
-  la.local t0, _sigot
-  la.local t1, _sgot
-  la.local t2, _egot
-  b LoopCopyGOTInit
+	la.local t0, _sigot
+	la.local t1, _sgot
+	la.local t2, _egot
+	b LoopCopyGOTInit
 
 LoopCopyGOTInit:
 	ld.w	t3, t0, 0
@@ -69,11 +69,11 @@ LoopCopyGOTInit:
 	addi.d	t0, t0, 4
 	addi.d	t1, t1, 4
 	blt	t1, t2, LoopCopyGOTInit
-  
+
 /* Zero fill the bss segment. */
 	la.local	t0, _sbss
 	la.local	t1, _ebss
-  b LoopFillZerobss
+	b LoopFillZerobss
 
 LoopFillZerobss:
 	st.w	zero, t0, 0
@@ -81,9 +81,26 @@ LoopFillZerobss:
 	blt	t0, t1, LoopFillZerobss
 
 /* Call static constructors */
-  bl __libc_init_array
+	bl __libc_init_array
+
+	li.d	t0, (0x7 << 16)
+	li.d	t1, (0x1 << 16)
+	csrxchg t1, t0, LOONGARCH_CSR_ECFG
+
+	li.d	t0, 0x1FFF
+	li.d	t1, 0x1FFF
+	csrxchg t1, t0, LOONGARCH_CSR_ECFG
+
+	la t0, exception_vector_base
+	csrwr	t0, LOONGARCH_CSR_EENTRY
+	li.d	t1, TO_PHYS_MASK
+	and t0, t0, t1
+	csrwr	t0, LOONGARCH_CSR_TLBRENTRY
+
+	li.d	t0, (1 << 2)
+	csrxchg t0, t0, LOONGARCH_CSR_CRMD
 
 /* Call the application's entry point.*/
-  bl main
+	bl main
 1:
 b 1b

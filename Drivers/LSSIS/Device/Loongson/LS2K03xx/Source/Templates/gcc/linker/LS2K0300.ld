@@ -31,6 +31,7 @@ SECTIONS
         KEEP (*(.init))
         KEEP (*(.fini))
 
+        KEEP(*(.text.vector_entry))
         . = ALIGN(4);
         _etext = .;        /* define a global symbols at end of code */
     } >FLASH
