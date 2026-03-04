@@ -3,6 +3,7 @@
 #endif
 
 #include <asm/stackframe.h>
+#include <ls2k03xx_hal_conf.h>
 
 .equ INSTR_SIZE, 4
 .equ VECTOR_SPACING_INSTRS, 2
@@ -51,40 +52,52 @@ tlb_refill_exception_handler:
 .type exception_handler_64, @function
 exception_handler_64:
 exception_handler_swi0:
-	BACKUP_T0T1
-	SAVE_ALL
+  BACKUP_T0T1
+  SAVE_ALL
 
-	li.d	t0, 0b01
-	csrxchg zero, t0, LOONGARCH_CSR_ESTAT
+  li.d	t0, 0b01
+  csrxchg zero, t0, LOONGARCH_CSR_ESTAT
 
-	RESTORE_ALL_AND_RET
+  RESTORE_ALL_AND_RET
 
 .type exception_handler_65, @function
 exception_handler_65:
 exception_handler_swi1:
-	BACKUP_T0T1
-	SAVE_ALL
+  BACKUP_T0T1
+  SAVE_ALL
 
-	li.d	t0, 0b10
-	csrxchg zero, t0, LOONGARCH_CSR_ESTAT
+  li.d	t0, 0b10
+  csrxchg zero, t0, LOONGARCH_CSR_ESTAT
 
-	RESTORE_ALL_AND_RET
+  RESTORE_ALL_AND_RET
 
 .type exception_handler_66, @function
 exception_handler_66:
 exception_handler_hwi0:
-	BACKUP_T0T1
-	SAVE_ALL
+  BACKUP_T0T1
+  SAVE_ALL
 
-	RESTORE_ALL_AND_RET
+#ifdef HAL_LIOINTC_MODULE_ENABLED
+  .extern HAL_LIOINTC_IRQHandler
+  li.w    a0, 0
+  bl    HAL_LIOINTC_IRQHandler
+#endif
+
+  RESTORE_ALL_AND_RET
 
 .type exception_handler_67, @function
 exception_handler_67:
 exception_handler_hwi1:
-	BACKUP_T0T1
-	SAVE_ALL
+  BACKUP_T0T1
+  SAVE_ALL
 
-	RESTORE_ALL_AND_RET
+#ifdef HAL_LIOINTC_MODULE_ENABLED
+  .extern HAL_LIOINTC_IRQHandler
+  li.d    a0, 1
+  bl    HAL_LIOINTC_IRQHandler
+#endif
+
+  RESTORE_ALL_AND_RET
 
 .macro define_exception nr
   .weak exception_handler_\nr

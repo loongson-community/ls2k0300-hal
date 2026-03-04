@@ -33,7 +33,9 @@
 extern "C" {
 #endif
 
+#ifndef __ASSEMBLY__
 /* Exported types ------------------------------------------------------------*/
+#endif /* __ASSEMBLY__ */
 /* Exported constants --------------------------------------------------------*/
 
 /* ########################## Module Selection ############################## */
@@ -41,6 +43,7 @@ extern "C" {
   * @brief This is the list of modules to be used in the HAL driver
   */
 #define HAL_MODULE_ENABLED
+#define HAL_LIOINTC_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
 #define HAL_UART_MODULE_ENABLED
@@ -68,10 +71,15 @@ extern "C" {
   */
 /* #define USE_FULL_ASSERT    1U */
 
+#ifndef __ASSEMBLY__
 /* Includes ------------------------------------------------------------------*/
 /**
   * @brief Include module's header file
   */
+
+#ifdef HAL_LIOINTC_MODULE_ENABLED
+#include "ls2k03xx_hal_liointc.h"
+#endif /* HAL_LIOINTC_MODULE_ENABLED */
 
 #ifdef HAL_GPIO_MODULE_ENABLED
 #include "ls2k03xx_hal_gpio.h"
@@ -101,6 +109,8 @@ void assert_failed(uint8_t* file, uint32_t line);
 #else
 #define assert_param(expr) ((void)0U)
 #endif /* USE_FULL_ASSERT */
+
+#endif /* __ASSEMBLY__ */
 
 #ifdef __cplusplus
 }
