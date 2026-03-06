@@ -7,6 +7,7 @@
  extern "C" {
 #endif
 
+#include "lssis.h"
 #ifdef __cplusplus
 }
 #endif

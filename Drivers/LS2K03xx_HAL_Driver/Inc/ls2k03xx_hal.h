@@ -95,7 +95,7 @@ void HAL_MspDeInit(void);
   */
 /* Peripheral Control functions  ************************************************/
 void HAL_Delay(uint32_t Delay);
-uint64_t HAL_GetTick(void);
+uint32_t HAL_GetTick(void);
 /**
   * @}
   */

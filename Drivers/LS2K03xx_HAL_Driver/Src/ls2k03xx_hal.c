@@ -202,16 +202,16 @@ static inline uint64_t drdtime(void)
   *       implementations in user file.
   * @retval tick value
   */
-__weak uint64_t HAL_GetTick(void)
+__weak uint32_t HAL_GetTick(void)
 {
-  return drdtime();
+  return drdtime() / (uwTickFreq / 1000);
 }
 
 void __delay(uint64_t cycles)
 {
-	uint64_t t0 = HAL_GetTick();
+	uint64_t t0 = drdtime();
 
-	while ((uint64_t)(HAL_GetTick() - t0) < cycles)
+	while ((uint64_t)(drdtime() - t0) < cycles)
   {
 	}
 }

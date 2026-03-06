@@ -238,7 +238,7 @@ typedef struct
 {
   __IO uint32_t CR1;
   __IO uint32_t CR2;
-  __IO uint32_t OAR;
+  __IO uint32_t OAR1;
   __IO uint32_t RESERVED;
   __IO uint32_t DR;
   __IO uint32_t SR1;
@@ -542,6 +542,159 @@ typedef struct
 /******************************************************************************/
 /*                         Peripheral Registers_Bits_Definition               */
 /******************************************************************************/
+
+/******************************************************************************/
+/*                                                                            */
+/*                      Inter-integrated Circuit Interface                    */
+/*                                                                            */
+/******************************************************************************/
+
+/*******************  Bit definition for I2C_CR1 register  ********************/
+#define I2C_CR1_PE_Pos                      (0U)                               
+#define I2C_CR1_PE_Msk                      (0x1UL << I2C_CR1_PE_Pos)           /*!< 0x00000001 */
+#define I2C_CR1_PE                          I2C_CR1_PE_Msk                     /*!< Peripheral Enable */
+#define I2C_CR1_ENGC_Pos                    (6U)                               
+#define I2C_CR1_ENGC_Msk                    (0x1UL << I2C_CR1_ENGC_Pos)         /*!< 0x00000040 */
+#define I2C_CR1_ENGC                        I2C_CR1_ENGC_Msk                   /*!< General Call Enable */
+#define I2C_CR1_NOSTRETCH_Pos               (7U)                               
+#define I2C_CR1_NOSTRETCH_Msk               (0x1UL << I2C_CR1_NOSTRETCH_Pos)    /*!< 0x00000080 */
+#define I2C_CR1_NOSTRETCH                   I2C_CR1_NOSTRETCH_Msk              /*!< Clock Stretching Disable (Slave mode) */
+#define I2C_CR1_START_Pos                   (8U)                               
+#define I2C_CR1_START_Msk                   (0x1UL << I2C_CR1_START_Pos)        /*!< 0x00000100 */
+#define I2C_CR1_START                       I2C_CR1_START_Msk                  /*!< Start Generation */
+#define I2C_CR1_STOP_Pos                    (9U)                               
+#define I2C_CR1_STOP_Msk                    (0x1UL << I2C_CR1_STOP_Pos)         /*!< 0x00000200 */
+#define I2C_CR1_STOP                        I2C_CR1_STOP_Msk                   /*!< Stop Generation */
+#define I2C_CR1_ACK_Pos                     (10U)                              
+#define I2C_CR1_ACK_Msk                     (0x1UL << I2C_CR1_ACK_Pos)          /*!< 0x00000400 */
+#define I2C_CR1_ACK                         I2C_CR1_ACK_Msk                    /*!< Acknowledge Enable */
+#define I2C_CR1_POS_Pos                     (11U)                              
+#define I2C_CR1_POS_Msk                     (0x1UL << I2C_CR1_POS_Pos)          /*!< 0x00000800 */
+#define I2C_CR1_POS                         I2C_CR1_POS_Msk                    /*!< Acknowledge/PEC Position (for data reception) */
+#define I2C_CR1_RECOVER_Pos                 (14U)
+#define I2C_CR1_RECOVER_Msk                 (0x1UL << I2C_CR1_RECOVER_Pos)      /*!< 0x00004000 */
+#define I2C_CR1_RECOVER                     I2C_CR1_RECOVER_Msk                /*!< I2C Bus Recovery */
+#define I2C_CR1_SWRST_Pos                   (15U)                              
+#define I2C_CR1_SWRST_Msk                   (0x1UL << I2C_CR1_SWRST_Pos)        /*!< 0x00008000 */
+#define I2C_CR1_SWRST                       I2C_CR1_SWRST_Msk                  /*!< Software Reset */
+
+/*******************  Bit definition for I2C_CR2 register  ********************/
+#define I2C_CR2_FREQ_Pos                    (0U)                               
+#define I2C_CR2_FREQ_Msk                    (0x3FUL << I2C_CR2_FREQ_Pos)        /*!< 0x0000003F */
+#define I2C_CR2_FREQ                        I2C_CR2_FREQ_Msk                   /*!< FREQ[5:0] bits (Peripheral Clock Frequency) */
+#define I2C_CR2_FREQ_0                      (0x01UL << I2C_CR2_FREQ_Pos)        /*!< 0x00000001 */
+#define I2C_CR2_FREQ_1                      (0x02UL << I2C_CR2_FREQ_Pos)        /*!< 0x00000002 */
+#define I2C_CR2_FREQ_2                      (0x04UL << I2C_CR2_FREQ_Pos)        /*!< 0x00000004 */
+#define I2C_CR2_FREQ_3                      (0x08UL << I2C_CR2_FREQ_Pos)        /*!< 0x00000008 */
+#define I2C_CR2_FREQ_4                      (0x10UL << I2C_CR2_FREQ_Pos)        /*!< 0x00000010 */
+#define I2C_CR2_FREQ_5                      (0x20UL << I2C_CR2_FREQ_Pos)        /*!< 0x00000020 */
+
+#define I2C_CR2_ITERREN_Pos                 (8U)                               
+#define I2C_CR2_ITERREN_Msk                 (0x1UL << I2C_CR2_ITERREN_Pos)      /*!< 0x00000100 */
+#define I2C_CR2_ITERREN                     I2C_CR2_ITERREN_Msk                /*!< Error Interrupt Enable */
+#define I2C_CR2_ITEVTEN_Pos                 (9U)                               
+#define I2C_CR2_ITEVTEN_Msk                 (0x1UL << I2C_CR2_ITEVTEN_Pos)      /*!< 0x00000200 */
+#define I2C_CR2_ITEVTEN                     I2C_CR2_ITEVTEN_Msk                /*!< Event Interrupt Enable */
+#define I2C_CR2_ITBUFEN_Pos                 (10U)                              
+#define I2C_CR2_ITBUFEN_Msk                 (0x1UL << I2C_CR2_ITBUFEN_Pos)      /*!< 0x00000400 */
+#define I2C_CR2_ITBUFEN                     I2C_CR2_ITBUFEN_Msk                /*!< Buffer Interrupt Enable */
+#define I2C_CR2_DMAEN_Pos                   (11U)                              
+#define I2C_CR2_DMAEN_Msk                   (0x1UL << I2C_CR2_DMAEN_Pos)        /*!< 0x00000800 */
+#define I2C_CR2_DMAEN                       I2C_CR2_DMAEN_Msk                  /*!< DMA Requests Enable */
+
+/*******************  Bit definition for I2C_OAR1 register  *******************/
+#define I2C_OAR1_ADD1_7                     0x000000FEU             /*!< Interface Address */
+
+#define I2C_OAR1_ADD0                       (0x1UL)                             /*!< 0x00000001 */
+
+#define I2C_OAR1_ADD1_Pos                   (1U)                               
+#define I2C_OAR1_ADD1_Msk                   (0x1UL << I2C_OAR1_ADD1_Pos)        /*!< 0x00000002 */
+#define I2C_OAR1_ADD1                       I2C_OAR1_ADD1_Msk                  /*!< Bit 1 */
+#define I2C_OAR1_ADD2_Pos                   (2U)                               
+#define I2C_OAR1_ADD2_Msk                   (0x1UL << I2C_OAR1_ADD2_Pos)        /*!< 0x00000004 */
+#define I2C_OAR1_ADD2                       I2C_OAR1_ADD2_Msk                  /*!< Bit 2 */
+#define I2C_OAR1_ADD3_Pos                   (3U)                               
+#define I2C_OAR1_ADD3_Msk                   (0x1UL << I2C_OAR1_ADD3_Pos)        /*!< 0x00000008 */
+#define I2C_OAR1_ADD3                       I2C_OAR1_ADD3_Msk                  /*!< Bit 3 */
+#define I2C_OAR1_ADD4_Pos                   (4U)                               
+#define I2C_OAR1_ADD4_Msk                   (0x1UL << I2C_OAR1_ADD4_Pos)        /*!< 0x00000010 */
+#define I2C_OAR1_ADD4                       I2C_OAR1_ADD4_Msk                  /*!< Bit 4 */
+#define I2C_OAR1_ADD5_Pos                   (5U)                               
+#define I2C_OAR1_ADD5_Msk                   (0x1UL << I2C_OAR1_ADD5_Pos)        /*!< 0x00000020 */
+#define I2C_OAR1_ADD5                       I2C_OAR1_ADD5_Msk                  /*!< Bit 5 */
+#define I2C_OAR1_ADD6_Pos                   (6U)                               
+#define I2C_OAR1_ADD6_Msk                   (0x1UL << I2C_OAR1_ADD6_Pos)        /*!< 0x00000040 */
+#define I2C_OAR1_ADD6                       I2C_OAR1_ADD6_Msk                  /*!< Bit 6 */
+#define I2C_OAR1_ADD7_Pos                   (7U)                               
+#define I2C_OAR1_ADD7_Msk                   (0x1UL << I2C_OAR1_ADD7_Pos)        /*!< 0x00000080 */
+#define I2C_OAR1_ADD7                       I2C_OAR1_ADD7_Msk                  /*!< Bit 7 */
+
+/********************  Bit definition for I2C_DR register  ********************/
+#define I2C_DR_DR_Pos             (0U)                                         
+#define I2C_DR_DR_Msk             (0xFFUL << I2C_DR_DR_Pos)                     /*!< 0x000000FF */
+#define I2C_DR_DR                 I2C_DR_DR_Msk                                /*!< 8-bit Data Register         */
+
+/*******************  Bit definition for I2C_SR1 register  ********************/
+#define I2C_SR1_SB_Pos                      (0U)                               
+#define I2C_SR1_SB_Msk                      (0x1UL << I2C_SR1_SB_Pos)           /*!< 0x00000001 */
+#define I2C_SR1_SB                          I2C_SR1_SB_Msk                     /*!< Start Bit (Master mode) */
+#define I2C_SR1_ADDR_Pos                    (1U)                               
+#define I2C_SR1_ADDR_Msk                    (0x1UL << I2C_SR1_ADDR_Pos)         /*!< 0x00000002 */
+#define I2C_SR1_ADDR                        I2C_SR1_ADDR_Msk                   /*!< Address sent (master mode)/matched (slave mode) */
+#define I2C_SR1_BTF_Pos                     (2U)                               
+#define I2C_SR1_BTF_Msk                     (0x1UL << I2C_SR1_BTF_Pos)          /*!< 0x00000004 */
+#define I2C_SR1_BTF                         I2C_SR1_BTF_Msk                    /*!< Byte Transfer Finished */
+#define I2C_SR1_STOPF_Pos                   (4U)                               
+#define I2C_SR1_STOPF_Msk                   (0x1UL << I2C_SR1_STOPF_Pos)        /*!< 0x00000010 */
+#define I2C_SR1_STOPF                       I2C_SR1_STOPF_Msk                  /*!< Stop detection (Slave mode) */
+#define I2C_SR1_RXNE_Pos                    (6U)                               
+#define I2C_SR1_RXNE_Msk                    (0x1UL << I2C_SR1_RXNE_Pos)         /*!< 0x00000040 */
+#define I2C_SR1_RXNE                        I2C_SR1_RXNE_Msk                   /*!< Data Register not Empty (receivers) */
+#define I2C_SR1_TXE_Pos                     (7U)                               
+#define I2C_SR1_TXE_Msk                     (0x1UL << I2C_SR1_TXE_Pos)          /*!< 0x00000080 */
+#define I2C_SR1_TXE                         I2C_SR1_TXE_Msk                    /*!< Data Register Empty (transmitters) */
+#define I2C_SR1_BERR_Pos                    (8U)                               
+#define I2C_SR1_BERR_Msk                    (0x1UL << I2C_SR1_BERR_Pos)         /*!< 0x00000100 */
+#define I2C_SR1_BERR                        I2C_SR1_BERR_Msk                   /*!< Bus Error */
+#define I2C_SR1_ARLO_Pos                    (9U)                               
+#define I2C_SR1_ARLO_Msk                    (0x1UL << I2C_SR1_ARLO_Pos)         /*!< 0x00000200 */
+#define I2C_SR1_ARLO                        I2C_SR1_ARLO_Msk                   /*!< Arbitration Lost (master mode) */
+#define I2C_SR1_AF_Pos                      (10U)                              
+#define I2C_SR1_AF_Msk                      (0x1UL << I2C_SR1_AF_Pos)           /*!< 0x00000400 */
+#define I2C_SR1_AF                          I2C_SR1_AF_Msk                     /*!< Acknowledge Failure */
+#define I2C_SR1_OVR_Pos                     (11U)                              
+#define I2C_SR1_OVR_Msk                     (0x1UL << I2C_SR1_OVR_Pos)          /*!< 0x00000800 */
+#define I2C_SR1_OVR                         I2C_SR1_OVR_Msk                    /*!< Overrun/Underrun */
+
+/*******************  Bit definition for I2C_SR2 register  ********************/
+#define I2C_SR2_MSL_Pos                     (0U)                               
+#define I2C_SR2_MSL_Msk                     (0x1UL << I2C_SR2_MSL_Pos)          /*!< 0x00000001 */
+#define I2C_SR2_MSL                         I2C_SR2_MSL_Msk                    /*!< Master/Slave */
+#define I2C_SR2_BUSY_Pos                    (1U)                               
+#define I2C_SR2_BUSY_Msk                    (0x1UL << I2C_SR2_BUSY_Pos)         /*!< 0x00000002 */
+#define I2C_SR2_BUSY                        I2C_SR2_BUSY_Msk                   /*!< Bus Busy */
+#define I2C_SR2_TRA_Pos                     (2U)                               
+#define I2C_SR2_TRA_Msk                     (0x1UL << I2C_SR2_TRA_Pos)          /*!< 0x00000004 */
+#define I2C_SR2_TRA                         I2C_SR2_TRA_Msk                    /*!< Transmitter/Receiver */
+#define I2C_SR2_GENCALL_Pos                 (4U)                               
+#define I2C_SR2_GENCALL_Msk                 (0x1UL << I2C_SR2_GENCALL_Pos)      /*!< 0x00000010 */
+#define I2C_SR2_GENCALL                     I2C_SR2_GENCALL_Msk                /*!< General Call Address (Slave mode) */
+
+/*******************  Bit definition for I2C_CCR register  ********************/
+#define I2C_CCR_CCR_Pos                     (0U)                               
+#define I2C_CCR_CCR_Msk                     (0xFFFUL << I2C_CCR_CCR_Pos)        /*!< 0x00000FFF */
+#define I2C_CCR_CCR                         I2C_CCR_CCR_Msk                    /*!< Clock Control Register in Fast/Standard mode (Master mode) */
+#define I2C_CCR_DUTY_Pos                    (14U)                              
+#define I2C_CCR_DUTY_Msk                    (0x1UL << I2C_CCR_DUTY_Pos)         /*!< 0x00004000 */
+#define I2C_CCR_DUTY                        I2C_CCR_DUTY_Msk                   /*!< Fast Mode Duty Cycle */
+#define I2C_CCR_FS_Pos                      (15U)                              
+#define I2C_CCR_FS_Msk                      (0x1UL << I2C_CCR_FS_Pos)           /*!< 0x00008000 */
+#define I2C_CCR_FS                          I2C_CCR_FS_Msk                     /*!< I2C Master Mode Selection */
+
+/******************  Bit definition for I2C_TRISE register  *******************/
+#define I2C_TRISE_TRISE_Pos                 (0U)                               
+#define I2C_TRISE_TRISE_Msk                 (0x3FUL << I2C_TRISE_TRISE_Pos)     /*!< 0x0000003F */
+#define I2C_TRISE_TRISE                     I2C_TRISE_TRISE_Msk                /*!< Maximum Rise Time in Fast/Standard mode (Master mode) */
 
 /*****************************************************************************/
 /*                                                                           */

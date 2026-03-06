@@ -43,6 +43,7 @@ extern "C" {
   * @brief This is the list of modules to be used in the HAL driver
   */
 #define HAL_MODULE_ENABLED
+#define HAL_I2C_MODULE_ENABLED
 #define HAL_LIOINTC_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
@@ -76,6 +77,10 @@ extern "C" {
 /**
   * @brief Include module's header file
   */
+
+#ifdef HAL_I2C_MODULE_ENABLED
+#include "ls2k03xx_hal_i2c.h"
+#endif /* HAL_I2C_MODULE_ENABLED */
 
 #ifdef HAL_LIOINTC_MODULE_ENABLED
 #include "ls2k03xx_hal_liointc.h"
