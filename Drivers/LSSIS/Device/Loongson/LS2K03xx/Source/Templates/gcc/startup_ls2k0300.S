@@ -100,6 +100,10 @@ LoopFillZerobss:
 	li.d	t0, (1 << 2)
 	csrxchg t0, t0, LOONGARCH_CSR_CRMD
 
+/* Enable FPU */
+	li.d	t0, (1 << 0)
+	csrxchg t0, t0, LOONGARCH_CSR_EUEN
+
 /* Call the application's entry point.*/
 	bl main
 1:
