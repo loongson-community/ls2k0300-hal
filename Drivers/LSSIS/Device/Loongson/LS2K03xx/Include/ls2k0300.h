@@ -545,6 +545,96 @@ typedef struct
 
 /******************************************************************************/
 /*                                                                            */
+/*                        Serial Peripheral Interface                         */
+/*                                                                            */
+/******************************************************************************/
+
+/****************  Bit definition for SPI_FLASH_SPCR register  ****************/
+#define SPI_FLASH_SPCR_SPR_POS              (0U)
+#define SPI_FLASH_SPCR_SPR_Msk              (0x3UL << SPI_FLASH_SPCR_SPR_POS)   /*!< 0x00000003 */
+#define SPI_FLASH_SPCR_SPR                  SPI_FLASH_SPCR_SPR_Msk
+#define SPI_FLASH_SPCR_CPHA_POS             (2U)
+#define SPI_FLASH_SPCR_CPHA_Msk             (0x1UL << SPI_FLASH_SPCR_CPHA_POS)  /*!< 0x00000004 */
+#define SPI_FLASH_SPCR_CPHA                 SPI_FLASH_SPCR_CPHA_Msk            /*!< SPI Clock Phase */
+#define SPI_FLASH_SPCR_CPOL_POS             (3U)
+#define SPI_FLASH_SPCR_CPOL_Msk             (0x1UL << SPI_FLASH_SPCR_CPOL_POS)  /*!< 0x00000008 */
+#define SPI_FLASH_SPCR_CPOL                 SPI_FLASH_SPCR_CPOL_Msk            /*!< SPI Clock Polarity */
+#define SPI_FLASH_SPCR_MSTR_POS             (4U)
+#define SPI_FLASH_SPCR_MSTR_Msk             (0x1UL << SPI_FLASH_SPCR_MSTR_POS)  /*!< 0x00000010 */
+#define SPI_FLASH_SPCR_MSTR                 SPI_FLASH_SPCR_MSTR_Msk            /*!< SPI Master Selection */
+#define SPI_FLASH_SPCR_SPE_POS              (6U)
+#define SPI_FLASH_SPCR_SPE_Msk              (0x1UL << SPI_FLASH_SPCR_SPE_POS)   /*!< 0x00000040 */
+#define SPI_FLASH_SPCR_SPE                  SPI_FLASH_SPCR_SPE_Msk             /*!< SPI Enable */
+#define SPI_FLASH_SPCR_SPIE_POS             (7U)
+#define SPI_FLASH_SPCR_SPIE_Msk             (0x1UL << SPI_FLASH_SPCR_SPIE_POS)  /*!< 0x00000080 */
+#define SPI_FLASH_SPCR_SPIE                 SPI_FLASH_SPCR_SPIE_Msk            /*!< SPI Interrupt */
+
+/****************  Bit definition for SPI_FLASH_SPSR register  ****************/
+#define SPI_FLASH_SPSR_RFEMPTY_POS          (0U)
+#define SPI_FLASH_SPSR_RFEMPTY_Msk          (0x1UL << SPI_FLASH_SPSR_RFEMPTY_POS)   /*!< 0x00000001 */
+#define SPI_FLASH_SPSR_RFEMPTY              SPI_FLASH_SPSR_RFEMPTY_Msk             /*!< SPI Receive FIFO Empty */
+#define SPI_FLASH_SPSR_RFFULL_POS           (1U)
+#define SPI_FLASH_SPSR_RFFULL_Msk           (0x1UL << SPI_FLASH_SPSR_RFFULL_POS)   /*!< 0x00000002 */
+#define SPI_FLASH_SPSR_RFFULL               SPI_FLASH_SPSR_RFFULL_Msk             /*!< SPI Receive FIFO Full */
+#define SPI_FLASH_SPSR_WFEMPTY_POS          (2U)
+#define SPI_FLASH_SPSR_WFEMPTY_Msk          (0x1UL << SPI_FLASH_SPSR_WFEMPTY_POS)   /*!< 0x00000004 */
+#define SPI_FLASH_SPSR_WFEMPTY              SPI_FLASH_SPSR_WFEMPTY_Msk             /*!< SPI Transmit FIFO Empty */
+#define SPI_FLASH_SPSR_WFFULL_POS           (3U)
+#define SPI_FLASH_SPSR_WFFULL_Msk           (0x1UL << SPI_FLASH_SPSR_WFFULL_POS)   /*!< 0x00000008 */
+#define SPI_FLASH_SPSR_WFFULL               SPI_FLASH_SPSR_WFFULL_Msk             /*!< SPI Transmit FIFO Full */
+#define SPI_FLASH_SPSR_WCOL_POS             (6U)
+#define SPI_FLASH_SPSR_WCOL_Msk             (0x1UL << SPI_FLASH_SPSR_WCOL_POS)  /*!< 0x00000040 */
+#define SPI_FLASH_SPSR_WCOL                 SPI_FLASH_SPSR_WCOL_Msk            /*!< SPI Write Collision Interrupt */
+#define SPI_FLASH_SPSR_SPIF_POS             (7U)
+#define SPI_FLASH_SPSR_SPIF_Msk             (0x1UL << SPI_FLASH_SPSR_SPIF_POS)  /*!< 0x00000080 */
+#define SPI_FLASH_SPSR_SPIF                 SPI_FLASH_SPSR_SPIF_Msk            /*!< SPI Transfer Complete Interrupt */
+
+/****************  Bit definition for SPI_FLASH_SPER register  ****************/
+#define SPI_FLASH_SPER_SPRE_POS             (0U)
+#define SPI_FLASH_SPER_SPRE_Msk             (0x3UL << SPI_FLASH_SPER_SPRE_POS)  /*!< 0x00000003 */
+#define SPI_FLASH_SPER_SPRE                 SPI_FLASH_SPER_SPRE_Msk            /*!< SPI Prescaler */
+#define SPI_FLASH_SPER_MODE_POS             (2U)
+#define SPI_FLASH_SPER_MODE_Msk             (0x1UL << SPI_FLASH_SPER_MODE_POS)  /*!< 0x00000004 */
+#define SPI_FLASH_SPER_MODE                 SPI_FLASH_SPER_MODE_Msk            /*!< SPI Mode */
+#define SPI_FLASH_SPER_ICNT_POS             (6U)
+#define SPI_FLASH_SPER_ICNT_Msk             (0x3UL << SPI_FLASH_SPER_ICNT_POS)  /*!< 0x000000C0 */
+#define SPI_FLASH_SPER_ICNT                 SPI_FLASH_SPER_ICNT_Msk            /*!< SPI Interrupt Count */
+
+/*************  Bit definition for SPI_FLASH_SFC_PARAM register  **************/
+#define SPI_FLASH_SFC_PARAM_MEMORY_EN_POS   (0U)
+#define SPI_FLASH_SFC_PARAM_MEMORY_EN_Msk   (0x1UL << SPI_FLASH_SFC_PARAM_MEMORY_EN_POS)  /*!< 0x00000001 */
+#define SPI_FLASH_SFC_PARAM_MEMORY_EN       SPI_FLASH_SFC_PARAM_MEMORY_EN_Msk            /*!< SPI Flash Memory Access Enable */
+#define SPI_FLASH_SFC_PARAM_BURST_EN_POS    (1U)
+#define SPI_FLASH_SFC_PARAM_BURST_EN_Msk    (0x1UL << SPI_FLASH_SFC_PARAM_BURST_EN_POS)   /*!< 0x00000002 */
+#define SPI_FLASH_SFC_PARAM_BURST_EN        SPI_FLASH_SFC_PARAM_BURST_EN_Msk             /*!< SPI Flash Burst Access Enable */
+#define SPI_FLASH_SFC_PARAM_FAST_READ_POS   (2U)
+#define SPI_FLASH_SFC_PARAM_FAST_READ_Msk   (0x1UL << SPI_FLASH_SFC_PARAM_FAST_READ_POS)  /*!< 0x00000004 */
+#define SPI_FLASH_SFC_PARAM_FAST_READ       SPI_FLASH_SFC_PARAM_FAST_READ_Msk            /*!< SPI Flash Fast Read Enable */
+#define SPI_FLASH_SFC_PARAM_DUAL_MODE_POS   (3U)
+#define SPI_FLASH_SFC_PARAM_DUAL_MODE_Msk   (0x1UL << SPI_FLASH_SFC_PARAM_DUAL_MODE_POS)  /*!< 0x00000008 */
+#define SPI_FLASH_SFC_PARAM_DUAL_MODE       SPI_FLASH_SFC_PARAM_DUAL_MODE_Msk            /*!< SPI Flash Dual I/O Mode Enable */
+#define SPI_FLASH_SFC_PARAM_CLK_DIV_POS     (4U)
+#define SPI_FLASH_SFC_PARAM_CLK_DIV_Msk     (0xFUL << SPI_FLASH_SFC_PARAM_CLK_DIV_POS)    /*!< 0x000000F0 */
+#define SPI_FLASH_SFC_PARAM_CLK_DIV         SPI_FLASH_SFC_PARAM_CLK_DIV_Msk
+
+/*************  Bit definition for SPI_FLASH_SFC_SOFTCS register  *************/
+#define SPI_FLASH_SFC_SOFTCS_CSEN_POS       (0U)
+#define SPI_FLASH_SFC_SOFTCS_CSEN_Msk       (0xFUL << SPI_FLASH_SFC_SOFTCS_CSEN_POS)      /*!< 0x0000000F */
+#define SPI_FLASH_SFC_SOFTCS_CSEN           SPI_FLASH_SFC_SOFTCS_CSEN_Msk                /*!< SPI Flash Software Chip Select Enable */
+#define SPI_FLASH_SFC_SOFTCS_CSN_POS        (4U)
+#define SPI_FLASH_SFC_SOFTCS_CSN_Msk        (0xFUL << SPI_FLASH_SFC_SOFTCS_CSN_POS)       /*!< 0x000000F0 */
+#define SPI_FLASH_SFC_SOFTCS_CSN            SPI_FLASH_SFC_SOFTCS_CSN_Msk                 /*!< SPI Flash Software Chip Select Number */
+
+/*************  Bit definition for SPI_FLASH_SFC_TIMING register  *************/
+#define SPI_FLASH_SFC_TIMING_TCSH_POS       (0U)
+#define SPI_FLASH_SFC_TIMING_TCSH_Msk       (0x3UL << SPI_FLASH_SFC_TIMING_TCSH_POS)      /*!< 0x00000003 */
+#define SPI_FLASH_SFC_TIMING_TCSH           SPI_FLASH_SFC_TIMING_TCSH_Msk                /*!< SPI Flash Chip Select Hold Time */
+#define SPI_FLASH_SFC_TIMING_TFAST_POS      (2U)
+#define SPI_FLASH_SFC_TIMING_TFAST_Msk      (0x1UL << SPI_FLASH_SFC_TIMING_TFAST_POS)     /*!< 0x00000004 */
+#define SPI_FLASH_SFC_TIMING_TFAST          SPI_FLASH_SFC_TIMING_TFAST_Msk               /*!< SPI Flash Fast Access Mode */
+
+/******************************************************************************/
+/*                                                                            */
 /*                      Inter-integrated Circuit Interface                    */
 /*                                                                            */
 /******************************************************************************/
@@ -1294,6 +1384,10 @@ typedef struct
 /** @addtogroup Exported_macro
   * @{
   */
+
+/******************************** SPI Instances *******************************/
+#define IS_SPI_FLASH_INSTANCE(INSTANCE) (((INSTANCE) == SPI0) || \
+                                         ((INSTANCE) == SPI1))
 
 /****************************** START TIM Instances ***************************/
 /****************************** TIM Instances *********************************/

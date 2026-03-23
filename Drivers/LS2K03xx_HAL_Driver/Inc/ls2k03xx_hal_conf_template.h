@@ -46,6 +46,7 @@ extern "C" {
 #define HAL_I2C_MODULE_ENABLED
 #define HAL_LIOINTC_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
+#define HAL_SPI_FLASH_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
 #define HAL_UART_MODULE_ENABLED
 
@@ -89,6 +90,10 @@ extern "C" {
 #ifdef HAL_GPIO_MODULE_ENABLED
 #include "ls2k03xx_hal_gpio.h"
 #endif /* HAL_GPIO_MODULE_ENABLED */
+
+#ifdef HAL_SPI_FLASH_MODULE_ENABLED
+#include "ls2k03xx_hal_spi_flash.h"
+#endif /* HAL_SPI_FLASH_MODULE_ENABLED */
 
 #ifdef HAL_TIM_MODULE_ENABLED
 #include "ls2k03xx_hal_tim.h"
