@@ -633,6 +633,185 @@ typedef struct
 #define SPI_FLASH_SFC_TIMING_TFAST_Msk      (0x1UL << SPI_FLASH_SFC_TIMING_TFAST_POS)     /*!< 0x00000004 */
 #define SPI_FLASH_SFC_TIMING_TFAST          SPI_FLASH_SFC_TIMING_TFAST_Msk               /*!< SPI Flash Fast Access Mode */
 
+/******************  Bit definition for SPI_IO_CR1 register  ******************/
+#define SPI_IO_CR1_SPE_POS                  (0U)
+#define SPI_IO_CR1_SPE_Msk                  (0x1UL << SPI_IO_CR1_SPE_POS)         /*!< 0x00000001 */
+#define SPI_IO_CR1_SPE                      SPI_IO_CR1_SPE_Msk
+#define SPI_IO_CR1_CSTART_POS               (1U)
+#define SPI_IO_CR1_CSTART_Msk               (0x1UL << SPI_IO_CR1_CSTART_POS)      /*!< 0x00000002 */
+#define SPI_IO_CR1_CSTART                   SPI_IO_CR1_CSTART_Msk
+#define SPI_IO_CR1_AUTOSUS_POS              (2U)
+#define SPI_IO_CR1_AUTOSUS_Msk              (0x1UL << SPI_IO_CR1_AUTOSUS_POS)     /*!< 0x00000004 */
+#define SPI_IO_CR1_AUTOSUS                  SPI_IO_CR1_AUTOSUS_Msk
+#define SPI_IO_CR1_SSREV_POS                (8U)
+#define SPI_IO_CR1_SSREV_Msk                (0x1UL << SPI_IO_CR1_SSREV_POS)       /*!< 0x00000100 */
+#define SPI_IO_CR1_SSREV                    SPI_IO_CR1_SSREV_Msk
+
+/******************  Bit definition for SPI_IO_CR2 register  ******************/
+#define SPI_IO_CR2_RXFTHLV_POS              (0U)
+#define SPI_IO_CR2_RXFTHLV_Msk              (0x3UL << SPI_IO_CR2_RXFTHLV_POS)     /*!< 0x00000003 */
+#define SPI_IO_CR2_RXFTHLV                  SPI_IO_CR2_RXFTHLV_Msk
+#define SPI_IO_CR2_RXDMAEN_POS              (7U)
+#define SPI_IO_CR2_RXDMAEN_Msk              (0x1UL << SPI_IO_CR2_RXDMAEN_POS)     /*!< 0x00000080 */
+#define SPI_IO_CR2_RXDMAEN                  SPI_IO_CR2_RXDMAEN_Msk
+#define SPI_IO_CR2_TXFTHLV_POS              (8U)
+#define SPI_IO_CR2_TXFTHLV_Msk              (0x3UL << SPI_IO_CR2_TXFTHLV_POS)     /*!< 0x00000300 */
+#define SPI_IO_CR2_TXFTHLV                  SPI_IO_CR2_TXFTHLV_Msk
+#define SPI_IO_CR2_TXDMAEN_POS              (15U)
+#define SPI_IO_CR2_TXDMAEN_Msk              (0x1UL << SPI_IO_CR2_TXDMAEN_POS)     /*!< 0x00008000 */
+#define SPI_IO_CR2_TXDMAEN                  SPI_IO_CR2_TXDMAEN_Msk
+
+/******************  Bit definition for SPI_IO_CR3 register  ******************/
+#define SPI_IO_CR3_TSIZE_POS                (0U)
+#define SPI_IO_CR3_TSIZE_Msk                (0xFFFFUL << SPI_IO_CR3_TSIZE_POS)    /*!< 0x0000FFFF */
+#define SPI_IO_CR3_TSIZE                    SPI_IO_CR3_TSIZE_Msk
+
+/******************  Bit definition for SPI_IO_CR4 register  ******************/
+#define SPI_IO_CR4_CTSIZE_POS               (0U)
+#define SPI_IO_CR4_CTSIZE_Msk               (0xFFFFUL << SPI_IO_CR4_CTSIZE_POS)   /*!< 0x0000FFFF */
+#define SPI_IO_CR4_CTSIZE                   SPI_IO_CR4_CTSIZE_Msk
+
+/******************  Bit definition for SPI_IO_IER register  ******************/
+#define SPI_IO_IER_RXAIE_POS                (0U)
+#define SPI_IO_IER_RXAIE_Msk                (0x1UL << SPI_IO_IER_RXAIE_POS)       /*!< 0x00000001 */
+#define SPI_IO_IER_RXAIE                    SPI_IO_IER_RXAIE_Msk
+#define SPI_IO_IER_TXAIE_POS                (1U)
+#define SPI_IO_IER_TXAIE_Msk                (0x1UL << SPI_IO_IER_TXAIE_POS)       /*!< 0x00000002 */
+#define SPI_IO_IER_TXAIE                    SPI_IO_IER_TXAIE_Msk
+#define SPI_IO_IER_DXAIE_POS                (2U)
+#define SPI_IO_IER_DXAIE_Msk                (0x1UL << SPI_IO_IER_DXAIE_POS)       /*!< 0x00000004 */
+#define SPI_IO_IER_DXAIE                    SPI_IO_IER_DXAIE_Msk
+#define SPI_IO_IER_RXEIE_POS                (4U)
+#define SPI_IO_IER_RXEIE_Msk                (0x1UL << SPI_IO_IER_RXEIE_POS)       /*!< 0x00000010 */
+#define SPI_IO_IER_RXEIE                    SPI_IO_IER_RXEIE_Msk
+#define SPI_IO_IER_TXEIE_POS                (5U)
+#define SPI_IO_IER_TXEIE_Msk                (0x1UL << SPI_IO_IER_TXEIE_POS)       /*!< 0x00000020 */
+#define SPI_IO_IER_TXEIE                    SPI_IO_IER_TXEIE_Msk
+#define SPI_IO_IER_SUSPIE_POS               (7U)
+#define SPI_IO_IER_SUSPIE_Msk               (0x1UL << SPI_IO_IER_SUSPIE_POS)      /*!< 0x00000080 */
+#define SPI_IO_IER_SUSPIE                   SPI_IO_IER_SUSPIE_Msk
+#define SPI_IO_IER_OVRIE_POS                (8U)
+#define SPI_IO_IER_OVRIE_Msk                (0x1UL << SPI_IO_IER_OVRIE_POS)       /*!< 0x00000100 */
+#define SPI_IO_IER_OVRIE                    SPI_IO_IER_OVRIE_Msk
+#define SPI_IO_IER_UDRIE_POS                (9U)
+#define SPI_IO_IER_UDRIE_Msk                (0x1UL << SPI_IO_IER_UDRIE_POS)       /*!< 0x00000200 */
+#define SPI_IO_IER_UDRIE                    SPI_IO_IER_UDRIE_Msk
+#define SPI_IO_IER_CRCEIE_POS               (10U)
+#define SPI_IO_IER_CRCEIE_Msk               (0x1UL << SPI_IO_IER_CRCEIE_POS)      /*!< 0x00000400 */
+#define SPI_IO_IER_CRCEIE                   SPI_IO_IER_CRCEIE_Msk
+#define SPI_IO_IER_MODFIE_POS               (11U)
+#define SPI_IO_IER_MODFIE_Msk               (0x1UL << SPI_IO_IER_MODFIE_POS)      /*!< 0x00000800 */
+#define SPI_IO_IER_MODFIE                   SPI_IO_IER_MODFIE_Msk
+#define SPI_IO_IER_EOTIE_POS                (15U)
+#define SPI_IO_IER_EOTIE_Msk                (0x1UL << SPI_IO_IER_EOTIE_POS)       /*!< 0x00008000 */
+#define SPI_IO_IER_EOTIE                    SPI_IO_IER_EOTIE_Msk
+
+/******************  Bit definition for SPI_IO_SR1 register  ******************/
+#define SPI_IO_SR1_RXA_POS                  (0U)
+#define SPI_IO_SR1_RXA_Msk                  (0x1UL << SPI_IO_SR1_RXA_POS)         /*!< 0x00000001 */
+#define SPI_IO_SR1_RXA                      SPI_IO_SR1_RXA_Msk
+#define SPI_IO_SR1_TXA_POS                  (1U)
+#define SPI_IO_SR1_TXA_Msk                  (0x1UL << SPI_IO_SR1_TXA_POS)         /*!< 0x00000002 */
+#define SPI_IO_SR1_TXA                      SPI_IO_SR1_TXA_Msk
+#define SPI_IO_SR1_DXA_POS                  (2U)
+#define SPI_IO_SR1_DXA_Msk                  (0x1UL << SPI_IO_SR1_DXA_POS)         /*!< 0x00000004 */
+#define SPI_IO_SR1_DXA                      SPI_IO_SR1_DXA_Msk
+#define SPI_IO_SR1_RXE_POS                  (4U)
+#define SPI_IO_SR1_RXE_Msk                  (0x1UL << SPI_IO_SR1_RXE_POS)         /*!< 0x00000010 */
+#define SPI_IO_SR1_RXE                      SPI_IO_SR1_RXE_Msk
+#define SPI_IO_SR1_TXE_POS                  (5U)
+#define SPI_IO_SR1_TXE_Msk                  (0x1UL << SPI_IO_SR1_TXE_POS)         /*!< 0x00000020 */
+#define SPI_IO_SR1_TXE                      SPI_IO_SR1_TXE_Msk
+#define SPI_IO_SR1_SUSP_POS                 (7U)
+#define SPI_IO_SR1_SUSP_Msk                 (0x1UL << SPI_IO_SR1_SUSP_POS)        /*!< 0x00000080 */
+#define SPI_IO_SR1_SUSP                     SPI_IO_SR1_SUSP_Msk
+#define SPI_IO_SR1_OVR_POS                  (8U)
+#define SPI_IO_SR1_OVR_Msk                  (0x1UL << SPI_IO_SR1_OVR_POS)         /*!< 0x00000100 */
+#define SPI_IO_SR1_OVR                      SPI_IO_SR1_OVR_Msk
+#define SPI_IO_SR1_UDR_POS                  (9U)
+#define SPI_IO_SR1_UDR_Msk                  (0x1UL << SPI_IO_SR1_UDR_POS)         /*!< 0x00000200 */
+#define SPI_IO_SR1_UDR                      SPI_IO_SR1_UDR_Msk
+#define SPI_IO_SR1_CRCE_POS                 (10U)
+#define SPI_IO_SR1_CRCE_Msk                 (0x1UL << SPI_IO_SR1_CRCE_POS)        /*!< 0x00000400 */
+#define SPI_IO_SR1_CRCE                     SPI_IO_SR1_CRCE_Msk
+#define SPI_IO_SR1_MODF_POS                 (11U)
+#define SPI_IO_SR1_MODF_Msk                 (0x1UL << SPI_IO_SR1_MODF_POS)        /*!< 0x00000800 */
+#define SPI_IO_SR1_MODF                     SPI_IO_SR1_MODF_Msk
+#define SPI_IO_SR1_EOT_POS                  (15U)
+#define SPI_IO_SR1_EOT_Msk                  (0x1UL << SPI_IO_SR1_EOT_POS)         /*!< 0x00008000 */
+#define SPI_IO_SR1_EOT                      SPI_IO_SR1_EOT_Msk
+
+/******************  Bit definition for SPI_IO_SR2 register  ******************/
+#define SPI_IO_SR2_RXFLV_POS                (0U)
+#define SPI_IO_SR2_RXFLV_Msk                (0x7UL << SPI_IO_SR2_RXFLV_POS)       /*!< 0x00000007 */
+#define SPI_IO_SR2_RXFLV                    SPI_IO_SR2_RXFLV_Msk
+#define SPI_IO_SR2_TXFLV_POS                (8U)
+#define SPI_IO_SR2_TXFLV_Msk                (0x7UL << SPI_IO_SR2_TXFLV_POS)       /*!< 0x00000700 */
+#define SPI_IO_SR2_TXFLV                    SPI_IO_SR2_TXFLV_Msk
+
+/******************  Bit definition for SPI_IO_CFG1 register  *****************/
+#define SPI_IO_CFG1_CPOL_POS                (0U)
+#define SPI_IO_CFG1_CPOL_Msk                (0x1UL << SPI_IO_CFG1_CPOL_POS)       /*!< 0x00000001 */
+#define SPI_IO_CFG1_CPOL                    SPI_IO_CFG1_CPOL_Msk
+#define SPI_IO_CFG1_CPHA_POS                (1U)
+#define SPI_IO_CFG1_CPHA_Msk                (0x1UL << SPI_IO_CFG1_CPHA_POS)       /*!< 0x00000002 */
+#define SPI_IO_CFG1_CPHA                    SPI_IO_CFG1_CPHA_Msk
+#define SPI_IO_CFG1_LSBFRST_POS             (7U)
+#define SPI_IO_CFG1_LSBFRST_Msk             (0x1UL << SPI_IO_CFG1_LSBFRST_POS)    /*!< 0x00000080 */
+#define SPI_IO_CFG1_LSBFRST                 SPI_IO_CFG1_LSBFRST_Msk
+#define SPI_IO_CFG1_DSIZE_POS               (8U)
+#define SPI_IO_CFG1_DSIZE_Msk               (0x1FUL << SPI_IO_CFG1_DSIZE_POS)     /*!< 0x00001F00 */
+#define SPI_IO_CFG1_DSIZE                   SPI_IO_CFG1_DSIZE_Msk
+
+/******************  Bit definition for SPI_IO_CFG2 register  *****************/
+#define SPI_IO_CFG2_BRDEC_POS               (2U)
+#define SPI_IO_CFG2_BRDEC_Msk               (0x3FUL << SPI_IO_CFG2_BRDEC_POS)     /*!< 0x000000FC */
+#define SPI_IO_CFG2_BRDEC                   SPI_IO_CFG2_BRDEC_Msk
+#define SPI_IO_CFG2_BRINT_POS               (8U)
+#define SPI_IO_CFG2_BRINT_Msk               (0xFFUL << SPI_IO_CFG2_BRINT_POS)     /*!< 0x0000FF00 */
+#define SPI_IO_CFG2_BRINT                   SPI_IO_CFG2_BRINT_Msk
+
+/******************  Bit definition for SPI_IO_CFG3 register  *****************/
+#define SPI_IO_CFG3_MSTR_POS                (0U)
+#define SPI_IO_CFG3_MSTR_Msk                (0x1UL << SPI_IO_CFG3_MSTR_POS)       /*!< 0x00000001 */
+#define SPI_IO_CFG3_MSTR                    SPI_IO_CFG3_MSTR_Msk
+#define SPI_IO_CFG3_DIOSWP_POS              (1U)
+#define SPI_IO_CFG3_DIOSWP_Msk              (0x1UL << SPI_IO_CFG3_DIOSWP_POS)     /*!< 0x00000002 */
+#define SPI_IO_CFG3_DIOSWP                  SPI_IO_CFG3_DIOSWP_Msk
+#define SPI_IO_CFG3_DIE_POS                 (2U)
+#define SPI_IO_CFG3_DIE_Msk                 (0x1UL << SPI_IO_CFG3_DIE_POS)        /*!< 0x00000004 */
+#define SPI_IO_CFG3_DIE                     SPI_IO_CFG3_DIE_Msk
+#define SPI_IO_CFG3_DOE_POS                 (3U)
+#define SPI_IO_CFG3_DOE_Msk                 (0x1UL << SPI_IO_CFG3_DOE_POS)        /*!< 0x00000008 */
+#define SPI_IO_CFG3_DOE                     SPI_IO_CFG3_DOE_Msk
+#define SPI_IO_CFG3_SSMODE_POS              (8U)
+#define SPI_IO_CFG3_SSMODE_Msk              (0x3UL << SPI_IO_CFG3_SSMODE_POS)     /*!< 0x00000300 */
+#define SPI_IO_CFG3_SSMODE                  SPI_IO_CFG3_SSMODE_Msk
+
+/******************  Bit definition for SPI_IO_CRC1 register  *****************/
+#define SPI_IO_CRC1_CRCEN_POS               (0U)
+#define SPI_IO_CRC1_CRCEN_Msk               (0x1UL << SPI_IO_CRC1_CRCEN_POS)      /*!< 0x00000001 */
+#define SPI_IO_CRC1_CRCEN                   SPI_IO_CRC1_CRCEN_Msk
+#define SPI_IO_CRC1_CRCPOLY_POS             (1U)
+#define SPI_IO_CRC1_CRCPOLY_Msk             (0x7FFFFFFFUL << SPI_IO_CRC1_CRCPOLY_POS) /*!< 0xFFFFFFFE */
+#define SPI_IO_CRC1_CRCPOLY                 SPI_IO_CRC1_CRCPOLY_Msk
+
+/******************  Bit definition for SPI_IO_CRC2 register  *****************/
+#define SPI_IO_CRC2_RCRCINI_POS             (0U)
+#define SPI_IO_CRC2_RCRCINI_Msk             (0x1UL << SPI_IO_CRC2_RCRCINI_POS)    /*!< 0x00000001 */
+#define SPI_IO_CRC2_RCRCINI                 SPI_IO_CRC2_RCRCINI_Msk
+#define SPI_IO_CRC2_TCRCINI_POS             (1U)
+#define SPI_IO_CRC2_TCRCINI_Msk             (0x1UL << SPI_IO_CRC2_TCRCINI_POS)    /*!< 0x00000002 */
+#define SPI_IO_CRC2_TCRCINI                 SPI_IO_CRC2_TCRCINI_Msk
+#define SPI_IO_CRC2_CRCSIZE_POS             (8U)
+#define SPI_IO_CRC2_CRCSIZE_Msk             (0x1FUL << SPI_IO_CRC2_CRCSIZE_POS)   /*!< 0x00001F00 */
+#define SPI_IO_CRC2_CRCSIZE                 SPI_IO_CRC2_CRCSIZE_Msk
+
+/******************  Bit definition for SPI_IO_DR register  *******************/
+#define SPI_IO_DR_DR_POS                    (0U)
+#define SPI_IO_DR_DR_Msk                    (0xFFFFFFFFUL << SPI_IO_DR_DR_POS)    /*!< 0xFFFFFFFF */
+#define SPI_IO_DR_DR                        SPI_IO_DR_DR_Msk
+
 /******************************************************************************/
 /*                                                                            */
 /*                      Inter-integrated Circuit Interface                    */
@@ -1388,6 +1567,9 @@ typedef struct
 /******************************** SPI Instances *******************************/
 #define IS_SPI_FLASH_INSTANCE(INSTANCE) (((INSTANCE) == SPI0) || \
                                          ((INSTANCE) == SPI1))
+
+#define IS_SPI_IO_INSTANCE(INSTANCE) (((INSTANCE) == SPI2) || \
+                                      ((INSTANCE) == SPI3))
 
 /****************************** START TIM Instances ***************************/
 /****************************** TIM Instances *********************************/
