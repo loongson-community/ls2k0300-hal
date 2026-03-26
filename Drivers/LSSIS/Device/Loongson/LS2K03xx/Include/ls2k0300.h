@@ -443,7 +443,7 @@ typedef struct
 
 #define SPI_IO_BASE           (PERIPH_BASE + 0x1610c000)
 #define SPI2_BASE             (SPI_IO_BASE + 0x0000)
-#define SPI3_BASE             (SPI_IO_BASE + 0x1000)
+#define SPI3_BASE             (SPI_IO_BASE + 0x2000)
 
 #define ATIM_BASE             (PERIPH_BASE + 0x16118000)
 #define GTIM_BASE             (SPI_IO_BASE + 0x16119000)
