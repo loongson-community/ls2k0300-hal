@@ -43,6 +43,7 @@ extern "C" {
   * @brief This is the list of modules to be used in the HAL driver
   */
 #define HAL_MODULE_ENABLED
+#define HAL_ADC_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
 #define HAL_I2C_MODULE_ENABLED
 #define HAL_LIOINTC_MODULE_ENABLED
@@ -84,6 +85,10 @@ extern "C" {
 #ifdef HAL_DMA_MODULE_ENABLED
 #include "ls2k03xx_hal_dma.h"
 #endif /* HAL_DMA_MODULE_ENABLED */
+
+#ifdef HAL_ADC_MODULE_ENABLED
+#include "ls2k03xx_hal_adc.h"
+#endif /* HAL_ADC_MODULE_ENABLED */
 
 #ifdef HAL_I2C_MODULE_ENABLED
 #include "ls2k03xx_hal_i2c.h"

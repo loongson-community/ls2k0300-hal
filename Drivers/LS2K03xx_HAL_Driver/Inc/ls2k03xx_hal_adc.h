@@ -1,13 +1,15 @@
 /**
   ******************************************************************************
-  * @file    stm32f1xx_hal_adc.h
-  * @author  MCD Application Team
+  * @file    ls2k03xx_hal_adc.h
+  * @author  MCD Application Team (Original STM32 HAL)
+  * @author  Ilikara <3435193369@qq.com> (Ported for LS2K03xx)
   * @brief   Header file containing functions prototypes of ADC HAL library.
   ******************************************************************************
   * @attention
   *
   *
   * Copyright (c) 2016 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -15,19 +17,24 @@
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
+  * @note
+  * This file is based on STM32 HAL library, ported and modified for 
+  * Loongson LS2K03xx series processors.
+  *
+  ******************************************************************************
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F1xx_HAL_ADC_H
-#define __STM32F1xx_HAL_ADC_H
+#ifndef __LS2K03xx_HAL_ADC_H
+#define __LS2K03xx_HAL_ADC_H
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal_def.h"  
-/** @addtogroup STM32F1xx_HAL_Driver
+#include "ls2k03xx_hal_def.h"  
+/** @addtogroup LS2K03xx_HAL_Driver
   * @{
   */
 
@@ -81,6 +88,10 @@ typedef struct
                                                   If set to ADC_SOFTWARE_START, external triggers are disabled.
                                                   If set to external trigger source, triggering is on event rising edge.
                                                   This parameter can be a value of @ref ADC_External_trigger_source_Regular */
+  uint32_t ClockDivider;                     /*!< Specifies ADC clock divider.
+                                                  This is a 10-bit value: bits[5:0] -> CLKDIV50 (CR1[29:24]), bits[9:6] -> CLKDIV96 (CR2[29:26]).
+                                                  ADC_CLK = APB_FREQ / (ClockDivider + 1)
+                                                  This parameter must be a number between Min_Data = 0 and Max_Data = 1023. */
 }ADC_InitTypeDef;
 
 /** 
@@ -92,17 +103,13 @@ typedef struct
 {
   uint32_t Channel;                /*!< Specifies the channel to configure into ADC regular group.
                                         This parameter can be a value of @ref ADC_channels
-                                        Note: Depending on devices, some channels may not be available on package pins. Refer to device datasheet for channels availability.
-                                        Note: On STM32F1 devices with several ADC: Only ADC1 can access internal measurement channels (VrefInt/TempSensor) 
-                                        Note: On STM32F10xx8 and STM32F10xxB devices: A low-amplitude voltage glitch may be generated (on ADC input 0) on the PA0 pin, when the ADC is converting with injection trigger.
-                                              It is advised to distribute the analog channels so that Channel 0 is configured as an injected channel.
-                                              Refer to errata sheet of these devices for more details. */
+                                        Note: Depending on devices, some channels may not be available on package pins. Refer to device datasheet for channels availability. */
   uint32_t Rank;                   /*!< Specifies the rank in the regular group sequencer 
                                         This parameter can be a value of @ref ADC_regular_rank
                                         Note: In case of need to disable a channel or change order of conversion sequencer, rank containing a previous channel setting can be overwritten by the new channel setting (or parameter number of conversions can be adjusted) */
   uint32_t SamplingTime;           /*!< Sampling time value to be set for the selected channel.
                                         Unit: ADC clock cycles
-                                        Conversion time is the addition of sampling time and processing time (12.5 ADC clock cycles at ADC resolution 12 bits).
+                                        Conversion time is the addition of sampling time and processing time (13 ADC clock cycles at ADC resolution 12 bits).
                                         This parameter can be a value of @ref ADC_sampling_times
                                         Caution: This parameter updates the parameter property of the channel, that can be used into regular and/or injected groups.
                                                  If this same channel has been previously configured in the other group (regular/injected), it will be updated to last setting.
@@ -150,22 +157,20 @@ typedef struct
 #define HAL_ADC_STATE_REG_BUSY          0x00000100U    /*!< A conversion on group regular is ongoing or can occur (either by continuous mode,
                                                            external trigger, low power auto power-on, multimode ADC master control) */
 #define HAL_ADC_STATE_REG_EOC           0x00000200U    /*!< Conversion data available on group regular */
-#define HAL_ADC_STATE_REG_OVR           0x00000400U    /*!< Not available on STM32F1 device: Overrun occurrence */
-#define HAL_ADC_STATE_REG_EOSMP         0x00000800U    /*!< Not available on STM32F1 device: End Of Sampling flag raised  */
+#define HAL_ADC_STATE_REG_OVR           0x00000400U    /*!< Not available on LS2K03 device: Overrun occurrence */
+#define HAL_ADC_STATE_REG_EOSMP         0x00000800U    /*!< Not available on LS2K03 device: End Of Sampling flag raised  */
 
 /* States of ADC group injected */
 #define HAL_ADC_STATE_INJ_BUSY          0x00001000U    /*!< A conversion on group injected is ongoing or can occur (either by auto-injection mode,
                                                            external trigger, low power auto power-on, multimode ADC master control) */
 #define HAL_ADC_STATE_INJ_EOC           0x00002000U    /*!< Conversion data available on group injected */
-#define HAL_ADC_STATE_INJ_JQOVF         0x00004000U    /*!< Not available on STM32F1 device: Injected queue overflow occurrence */
+#define HAL_ADC_STATE_INJ_JQOVF         0x00004000U    /*!< Not available on LS2K03 device: Injected queue overflow occurrence */
 
 /* States of ADC analog watchdogs */
 #define HAL_ADC_STATE_AWD1              0x00010000U    /*!< Out-of-window occurrence of analog watchdog 1 */
-#define HAL_ADC_STATE_AWD2              0x00020000U    /*!< Not available on STM32F1 device: Out-of-window occurrence of analog watchdog 2 */
-#define HAL_ADC_STATE_AWD3              0x00040000U    /*!< Not available on STM32F1 device: Out-of-window occurrence of analog watchdog 3 */
+#define HAL_ADC_STATE_AWD2              0x00020000U    /*!< Not available on LS2K03 device: Out-of-window occurrence of analog watchdog 2 */
+#define HAL_ADC_STATE_AWD3              0x00040000U    /*!< Not available on LS2K03 device: Out-of-window occurrence of analog watchdog 3 */
 
-/* States of ADC multi-mode */
-#define HAL_ADC_STATE_MULTIMODE_SLAVE   0x00100000U    /*!< ADC in multimode slave state, controlled by another ADC master ( */
 
 
 /**
@@ -301,9 +306,6 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 #define ADC_CHANNEL_15          ((uint32_t)(                 ADC_SQR3_SQ1_3 | ADC_SQR3_SQ1_2 | ADC_SQR3_SQ1_1 | ADC_SQR3_SQ1_0))
 #define ADC_CHANNEL_16          ((uint32_t)(ADC_SQR3_SQ1_4                                                                    ))
 #define ADC_CHANNEL_17          ((uint32_t)(ADC_SQR3_SQ1_4                                                    | ADC_SQR3_SQ1_0))
-
-#define ADC_CHANNEL_TEMPSENSOR  ADC_CHANNEL_16  /* ADC internal channel (no connection on device pin) */
-#define ADC_CHANNEL_VREFINT     ADC_CHANNEL_17  /* ADC internal channel (no connection on device pin) */
 /**
   * @}
   */
@@ -311,14 +313,14 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 /** @defgroup ADC_sampling_times ADC sampling times
   * @{
   */
-#define ADC_SAMPLETIME_1CYCLE_5                   0x00000000U                                              /*!< Sampling time 1.5 ADC clock cycle */
-#define ADC_SAMPLETIME_7CYCLES_5      ((uint32_t)(                                      ADC_SMPR2_SMP0_0)) /*!< Sampling time 7.5 ADC clock cycles */
-#define ADC_SAMPLETIME_13CYCLES_5     ((uint32_t)(                   ADC_SMPR2_SMP0_1                   )) /*!< Sampling time 13.5 ADC clock cycles */
-#define ADC_SAMPLETIME_28CYCLES_5     ((uint32_t)(                   ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0)) /*!< Sampling time 28.5 ADC clock cycles */
-#define ADC_SAMPLETIME_41CYCLES_5     ((uint32_t)(ADC_SMPR2_SMP0_2                                      )) /*!< Sampling time 41.5 ADC clock cycles */
-#define ADC_SAMPLETIME_55CYCLES_5     ((uint32_t)(ADC_SMPR2_SMP0_2                    | ADC_SMPR2_SMP0_0)) /*!< Sampling time 55.5 ADC clock cycles */
-#define ADC_SAMPLETIME_71CYCLES_5     ((uint32_t)(ADC_SMPR2_SMP0_2 | ADC_SMPR2_SMP0_1                   )) /*!< Sampling time 71.5 ADC clock cycles */
-#define ADC_SAMPLETIME_239CYCLES_5    ((uint32_t)(ADC_SMPR2_SMP0_2 | ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0)) /*!< Sampling time 239.5 ADC clock cycles */
+#define ADC_SAMPLETIME_1CYCLE                   0x00000000U                                              /*!< Sampling time 1 ADC clock cycle */
+#define ADC_SAMPLETIME_2CYCLES      ((uint32_t)(                                      ADC_SMPR2_SMP0_0)) /*!< Sampling time 2 ADC clock cycles */
+#define ADC_SAMPLETIME_4CYCLES      ((uint32_t)(                   ADC_SMPR2_SMP0_1                   )) /*!< Sampling time 4 ADC clock cycles */
+#define ADC_SAMPLETIME_8CYCLES      ((uint32_t)(                   ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0)) /*!< Sampling time 8 ADC clock cycles */
+#define ADC_SAMPLETIME_16CYCLES     ((uint32_t)(ADC_SMPR2_SMP0_2                                      )) /*!< Sampling time 16 ADC clock cycles */
+#define ADC_SAMPLETIME_32CYCLES     ((uint32_t)(ADC_SMPR2_SMP0_2                    | ADC_SMPR2_SMP0_0)) /*!< Sampling time 32 ADC clock cycles */
+#define ADC_SAMPLETIME_64CYCLES     ((uint32_t)(ADC_SMPR2_SMP0_2 | ADC_SMPR2_SMP0_1                   )) /*!< Sampling time 64 ADC clock cycles */
+#define ADC_SAMPLETIME_128CYCLES    ((uint32_t)(ADC_SMPR2_SMP0_2 | ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0)) /*!< Sampling time 128 ADC clock cycles */
 /**
   * @}
   */
@@ -417,16 +419,16 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   * @{
   */
 /* ADC conversion cycles (unit: ADC clock cycles)                           */
-/* (selected sampling time + conversion time of 12.5 ADC clock cycles, with */
+/* (selected sampling time + conversion time of 13 ADC clock cycles, with   */
 /* resolution 12 bits)                                                      */
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_1CYCLE5                  14U
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_7CYCLES5                 20U
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_13CYCLES5                26U
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_28CYCLES5                41U
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_41CYCLES5                54U
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_55CYCLES5                68U
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_71CYCLES5                84U
-#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_239CYCLES5              252U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_1CYCLE                   14U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_2CYCLES                  15U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_4CYCLES                  17U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_8CYCLES                  21U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_16CYCLES                 39U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_32CYCLES                 45U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_64CYCLES                 77U
+#define ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_128CYCLES                141U
 /**
   * @}
   */
@@ -458,23 +460,23 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
      (ADC_SMPR1_SMP17_0 | ADC_SMPR1_SMP16_0 | ADC_SMPR1_SMP15_0 | ADC_SMPR1_SMP14_0 | \
       ADC_SMPR1_SMP13_0 | ADC_SMPR1_SMP12_0 | ADC_SMPR1_SMP11_0 | ADC_SMPR1_SMP10_0 )
 
-#define ADC_SAMPLETIME_1CYCLE5_SMPR2ALLCHANNELS    0x00000000U
-#define ADC_SAMPLETIME_7CYCLES5_SMPR2ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
-#define ADC_SAMPLETIME_13CYCLES5_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1)
-#define ADC_SAMPLETIME_28CYCLES5_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
-#define ADC_SAMPLETIME_41CYCLES5_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2)
-#define ADC_SAMPLETIME_55CYCLES5_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
-#define ADC_SAMPLETIME_71CYCLES5_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1)
-#define ADC_SAMPLETIME_239CYCLES5_SMPR2ALLCHANNELS (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
+#define ADC_SAMPLETIME_1CYCLE_SMPR2ALLCHANNELS    0x00000000U
+#define ADC_SAMPLETIME_2CYCLES_SMPR2ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
+#define ADC_SAMPLETIME_4CYCLES_SMPR2ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1)
+#define ADC_SAMPLETIME_8CYCLES_SMPR2ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
+#define ADC_SAMPLETIME_16CYCLES_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2)
+#define ADC_SAMPLETIME_32CYCLES_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
+#define ADC_SAMPLETIME_64CYCLES_SMPR2ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1)
+#define ADC_SAMPLETIME_128CYCLES_SMPR2ALLCHANNELS (ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT0)
 
-#define ADC_SAMPLETIME_1CYCLE5_SMPR1ALLCHANNELS    0x00000000U
-#define ADC_SAMPLETIME_7CYCLES5_SMPR1ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
-#define ADC_SAMPLETIME_13CYCLES5_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1)
-#define ADC_SAMPLETIME_28CYCLES5_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
-#define ADC_SAMPLETIME_41CYCLES5_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2)
-#define ADC_SAMPLETIME_55CYCLES5_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
-#define ADC_SAMPLETIME_71CYCLES5_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1)
-#define ADC_SAMPLETIME_239CYCLES5_SMPR1ALLCHANNELS (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
+#define ADC_SAMPLETIME_1CYCLE_SMPR1ALLCHANNELS    0x00000000U
+#define ADC_SAMPLETIME_2CYCLES_SMPR1ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
+#define ADC_SAMPLETIME_4CYCLES_SMPR1ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1)
+#define ADC_SAMPLETIME_8CYCLES_SMPR1ALLCHANNELS   (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
+#define ADC_SAMPLETIME_16CYCLES_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2)
+#define ADC_SAMPLETIME_32CYCLES_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
+#define ADC_SAMPLETIME_64CYCLES_SMPR1ALLCHANNELS  (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1)
+#define ADC_SAMPLETIME_128CYCLES_SMPR1ALLCHANNELS (ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1 | ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0)
 /**
   * @}
   */
@@ -499,7 +501,7 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   * @brief Enable the ADC peripheral
   * @note ADC enable requires a delay for ADC stabilization time
   *       (refer to device datasheet, parameter tSTAB)
-  * @note On STM32F1, if ADC is already enabled this macro trigs a conversion 
+  * @note On LS2K03, if ADC is already enabled this macro trigs a conversion 
   *       SW start on regular group.
   * @param __HANDLE__: ADC handle
   * @retval None
@@ -635,6 +637,17 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   (READ_BIT((__HANDLE__)->Instance->CR2, ADC_CR2_JEXTSEL) == ADC_INJECTED_SOFTWARE_START)
 
 /**
+  * @brief Get ADC clock frequency
+  * @param __HANDLE__: ADC handle
+  * @retval ADC clock frequency in Hz
+  * @note  ADC clock = APB_FREQ / (ADC_ClkDivider + 1)
+  *        ADC_ClkDivider is 10-bit: CLKDIV96 (bits[29:26] of CR2) << 6 | CLKDIV50 (bits[29:24] of CR1)
+  */
+#define ADC_GET_CLKFREQ(__HANDLE__)                                              \
+  ((APB_FREQ) / ((((READ_BIT((__HANDLE__)->Instance->CR2, ADC_CR2_CLKDIV96) >> ADC_CR2_CLKDIV96_Pos) << 6) | \
+                  ((READ_BIT((__HANDLE__)->Instance->CR1, ADC_CR1_CLKDIV50) >> ADC_CR1_CLKDIV50_Pos))) + 1))
+
+/**
   * @brief Simultaneously clears and sets specific bits of the handle State
   * @note: ADC_STATE_CLR_SET() macro is merely aliased to generic macro MODIFY_REG(),
   *        the first parameter is the ADC handle State, the second parameter is the
@@ -714,7 +727,7 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 
 /**
   * @brief Set the selected injected channel rank
-  *        Note: on STM32F1 devices, channel rank position in JSQR register
+  *        Note: on LS2K03 devices, channel rank position in JSQR register
   *              is depending on total number of ranks selected into
   *              injected sequencer (ranks sequence starting from 4-JL)
   * @param _CHANNELNB_: Channel number.
@@ -755,29 +768,29 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 
 /**
   * @brief Get the maximum ADC conversion cycles on all channels.
-  * Returns the selected sampling time + conversion time (12.5 ADC clock cycles)
+  * Returns the selected sampling time + conversion time (13 ADC clock cycles)
   * Approximation of sampling time within 4 ranges, returns the highest value:
-  *   below 7.5 cycles {1.5 cycle; 7.5 cycles},
-  *   between 13.5 cycles and 28.5 cycles {13.5 cycles; 28.5 cycles}
-  *   between 41.5 cycles and 71.5 cycles {41.5 cycles; 55.5 cycles; 71.5cycles}
-  *   equal to 239.5 cycles
+  *   below 2 cycles {1 cycle; 2 cycles},
+  *   between 4 cycles and 8 cycles {4 cycles; 8 cycles}
+  *   between 16 cycles and 64 cycles {16 cycles; 32 cycles; 64 cycles}
+  *   equal to 128 cycles
   * Unit: ADC clock cycles
   * @param __HANDLE__: ADC handle
   * @retval ADC conversion cycles on all channels
-  */   
+  */
 #define ADC_CONVCYCLES_MAX_RANGE(__HANDLE__)                                                                     \
     (( (((__HANDLE__)->Instance->SMPR2 & ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT2) == RESET)  &&                     \
        (((__HANDLE__)->Instance->SMPR1 & ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT2) == RESET) ) ?                     \
                                                                                                                  \
           (( (((__HANDLE__)->Instance->SMPR2 & ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1) == RESET)  &&               \
              (((__HANDLE__)->Instance->SMPR1 & ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1) == RESET) ) ?               \
-               ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_7CYCLES5 : ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_28CYCLES5)   \
+               ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_2CYCLES : ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_8CYCLES)   \
           :                                                                                                      \
           ((((((__HANDLE__)->Instance->SMPR2 & ADC_SAMPLETIME_ALLCHANNELS_SMPR2BIT1) == RESET)  &&               \
              (((__HANDLE__)->Instance->SMPR1 & ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT1) == RESET)) ||               \
             ((((__HANDLE__)->Instance->SMPR2 & ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0) == RESET)  &&               \
              (((__HANDLE__)->Instance->SMPR1 & ADC_SAMPLETIME_ALLCHANNELS_SMPR1BIT0) == RESET))) ?               \
-               ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_71CYCLES5 : ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_239CYCLES5) \
+               ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_64CYCLES : ADC_CONVERSIONCLOCKCYCLES_SAMPLETIME_128CYCLES) \
      )
 
 #define IS_ADC_DATA_ALIGN(ALIGN) (((ALIGN) == ADC_DATAALIGN_RIGHT) || \
@@ -808,14 +821,14 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
                                  ((CHANNEL) == ADC_CHANNEL_16)          || \
                                  ((CHANNEL) == ADC_CHANNEL_17)            )
 
-#define IS_ADC_SAMPLE_TIME(TIME) (((TIME) == ADC_SAMPLETIME_1CYCLE_5)    || \
-                                  ((TIME) == ADC_SAMPLETIME_7CYCLES_5)   || \
-                                  ((TIME) == ADC_SAMPLETIME_13CYCLES_5)  || \
-                                  ((TIME) == ADC_SAMPLETIME_28CYCLES_5)  || \
-                                  ((TIME) == ADC_SAMPLETIME_41CYCLES_5)  || \
-                                  ((TIME) == ADC_SAMPLETIME_55CYCLES_5)  || \
-                                  ((TIME) == ADC_SAMPLETIME_71CYCLES_5)  || \
-                                  ((TIME) == ADC_SAMPLETIME_239CYCLES_5)   )
+#define IS_ADC_SAMPLE_TIME(TIME) (((TIME) == ADC_SAMPLETIME_1CYCLE)     || \
+                                  ((TIME) == ADC_SAMPLETIME_2CYCLES)    || \
+                                  ((TIME) == ADC_SAMPLETIME_4CYCLES)    || \
+                                  ((TIME) == ADC_SAMPLETIME_8CYCLES)    || \
+                                  ((TIME) == ADC_SAMPLETIME_16CYCLES)   || \
+                                  ((TIME) == ADC_SAMPLETIME_32CYCLES)   || \
+                                  ((TIME) == ADC_SAMPLETIME_64CYCLES)   || \
+                                  ((TIME) == ADC_SAMPLETIME_128CYCLES)    )
 
 #define IS_ADC_REGULAR_RANK(CHANNEL) (((CHANNEL) == ADC_REGULAR_RANK_1 ) || \
                                       ((CHANNEL) == ADC_REGULAR_RANK_2 ) || \
@@ -873,13 +886,21 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
 /**
   * @}
   */
-      
+
+/** @defgroup ADC_clock_divider_verification ADC clock divider verification
+  * @{
+  */
+#define IS_ADC_CLKDIV(DIV) (((DIV) <= 1023U))  /* 10-bit value */
+/**
+  * @}
+  */
+
 /**
   * @}
   */
     
 /* Include ADC HAL Extension module */
-#include "stm32f1xx_hal_adc_ex.h"
+#include "ls2k03xx_hal_adc_ex.h"
 
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup ADC_Exported_Functions
@@ -997,4 +1018,4 @@ void              ADC_DMAError(DMA_HandleTypeDef *hdma);
 #endif
 
 
-#endif /* __STM32F1xx_HAL_ADC_H */
+#endif /* __LS2K03xx_HAL_ADC_H */
