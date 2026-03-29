@@ -1,7 +1,8 @@
 /**
   ******************************************************************************
-  * @file    stm32f1xx_hal_dma.c
-  * @author  MCD Application Team
+  * @file    ls2k03xx_hal_dma.c
+  * @author  MCD Application Team (Original STM32 HAL)
+  * @author  Ilikara <3435193369@qq.com> (Ported for LS2K03xx)
   * @brief   DMA HAL module driver.
   *         This file provides firmware functions to manage the following
   *         functionalities of the Direct Memory Access (DMA) peripheral:
@@ -71,6 +72,7 @@
   * @attention
   *
   * Copyright (c) 2016 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file in
@@ -78,12 +80,17 @@
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
+  * @note
+  * This file is based on STM32 HAL library, ported and modified for 
+  * Loongson LS2K03xx series processors.
+  *
+  ******************************************************************************
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
+#include "ls2k03xx_hal.h"
 
-/** @addtogroup STM32F1xx_HAL_Driver
+/** @addtogroup LS2K03xx_HAL_Driver
   * @{
   */
 
@@ -159,25 +166,9 @@ HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
   assert_param(IS_DMA_MODE(hdma->Init.Mode));
   assert_param(IS_DMA_PRIORITY(hdma->Init.Priority));
 
-#if defined (DMA2)
   /* calculation of the channel index */
-  if ((uint32_t)(hdma->Instance) < (uint32_t)(DMA2_Channel1))
-  {
-    /* DMA1 */
-    hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA1_Channel1) / ((uint32_t)DMA1_Channel2 - (uint32_t)DMA1_Channel1)) << 2;
-    hdma->DmaBaseAddress = DMA1;
-  }
-  else 
-  {
-    /* DMA2 */
-    hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA2_Channel1) / ((uint32_t)DMA2_Channel2 - (uint32_t)DMA2_Channel1)) << 2;
-    hdma->DmaBaseAddress = DMA2;
-  }
-#else
-  /* DMA1 */
-  hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA1_Channel1) / ((uint32_t)DMA1_Channel2 - (uint32_t)DMA1_Channel1)) << 2;
-  hdma->DmaBaseAddress = DMA1;
-#endif /* DMA2 */
+  hdma->ChannelIndex = ((((uint32_t)hdma->Instance - (uint32_t)DMA_Channel0) / ((uint32_t)DMA_Channel1 - (uint32_t)DMA_Channel0)) << 2);
+  hdma->DmaBaseAddress = DMA;
 
   /* Change DMA peripheral state */
   hdma->State = HAL_DMA_STATE_BUSY;
@@ -242,28 +233,12 @@ HAL_StatusTypeDef HAL_DMA_DeInit(DMA_HandleTypeDef *hdma)
   /* Reset DMA Channel memory address register */
   hdma->Instance->CMAR = 0U;
 
-#if defined (DMA2)
   /* calculation of the channel index */
-  if ((uint32_t)(hdma->Instance) < (uint32_t)(DMA2_Channel1))
-  {
-    /* DMA1 */
-    hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA1_Channel1) / ((uint32_t)DMA1_Channel2 - (uint32_t)DMA1_Channel1)) << 2;
-    hdma->DmaBaseAddress = DMA1;
-  }
-  else
-  {
-    /* DMA2 */
-    hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA2_Channel1) / ((uint32_t)DMA2_Channel2 - (uint32_t)DMA2_Channel1)) << 2;
-    hdma->DmaBaseAddress = DMA2;
-  }
-#else
-  /* DMA1 */
-  hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA1_Channel1) / ((uint32_t)DMA1_Channel2 - (uint32_t)DMA1_Channel1)) << 2;
-  hdma->DmaBaseAddress = DMA1;
-#endif /* DMA2 */
+  hdma->ChannelIndex = ((((uint32_t)hdma->Instance - (uint32_t)DMA_Channel0) / ((uint32_t)DMA_Channel1 - (uint32_t)DMA_Channel0)) << 2);
+  hdma->DmaBaseAddress = DMA;
 
   /* Clear all flags */
-  hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF1 << (hdma->ChannelIndex));
+  hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF0 << (hdma->ChannelIndex));
 
   /* Clean all callbacks */
   hdma->XferCpltCallback = NULL;
@@ -436,7 +411,7 @@ HAL_StatusTypeDef HAL_DMA_Abort(DMA_HandleTypeDef *hdma)
     __HAL_DMA_DISABLE(hdma);
       
     /* Clear all flags */
-    hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF1 << hdma->ChannelIndex);
+    hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF0 << hdma->ChannelIndex);
   }
   /* Change the DMA state */
   hdma->State = HAL_DMA_STATE_READY;
@@ -540,7 +515,7 @@ HAL_StatusTypeDef HAL_DMA_PollForTransfer(DMA_HandleTypeDef *hdma, uint32_t Comp
       /* When a DMA transfer error occurs */
       /* A hardware clear of its EN bits is performed */
       /* Clear all flags */
-      hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF1 << hdma->ChannelIndex);
+      hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF0 << hdma->ChannelIndex);
 
       /* Update error code */
       SET_BIT(hdma->ErrorCode, HAL_DMA_ERROR_TE);
@@ -605,7 +580,7 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
   uint32_t source_it = hdma->Instance->CCR;
   
   /* Half Transfer Complete Interrupt management ******************************/
-  if (((flag_it & (DMA_FLAG_HT1 << hdma->ChannelIndex)) != RESET) && ((source_it & DMA_IT_HT) != RESET))
+  if (((flag_it & (DMA_FLAG_HT0 << hdma->ChannelIndex)) != RESET) && ((source_it & DMA_IT_HT) != RESET))
   {
     /* Disable the half transfer interrupt if the DMA mode is not CIRCULAR */
     if((hdma->Instance->CCR & DMA_CCR_CIRC) == 0U)
@@ -627,7 +602,7 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
   }
 
   /* Transfer Complete Interrupt management ***********************************/
-  else if (((flag_it & (DMA_FLAG_TC1 << hdma->ChannelIndex)) != RESET) && ((source_it & DMA_IT_TC) != RESET))
+  else if (((flag_it & (DMA_FLAG_TC0 << hdma->ChannelIndex)) != RESET) && ((source_it & DMA_IT_TC) != RESET))
   {
     if((hdma->Instance->CCR & DMA_CCR_CIRC) == 0U)
     {
@@ -651,7 +626,7 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
   }
 
   /* Transfer Error Interrupt management **************************************/
-  else if (( RESET != (flag_it & (DMA_FLAG_TE1 << hdma->ChannelIndex))) && (RESET != (source_it & DMA_IT_TE)))
+  else if (( RESET != (flag_it & (DMA_FLAG_TE0 << hdma->ChannelIndex))) && (RESET != (source_it & DMA_IT_TE)))
   {
     /* When a DMA transfer error occurs */
     /* A hardware clear of its EN bits is performed */
@@ -659,7 +634,7 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
     __HAL_DMA_DISABLE_IT(hdma, (DMA_IT_TC | DMA_IT_HT | DMA_IT_TE));
 
     /* Clear all flags */
-    hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF1 << hdma->ChannelIndex);
+    hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF0 << hdma->ChannelIndex);
 
     /* Update error code */
     hdma->ErrorCode = HAL_DMA_ERROR_TE;
@@ -857,7 +832,7 @@ uint32_t HAL_DMA_GetError(DMA_HandleTypeDef *hdma)
 static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint32_t DataLength)
 {
   /* Clear all flags */
-  hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF1 << hdma->ChannelIndex);
+  hdma->DmaBaseAddress->IFCR = (DMA_ISR_GIF0 << hdma->ChannelIndex);
 
   /* Configure DMA Channel data length */
   hdma->Instance->CNDTR = DataLength;
@@ -894,4 +869,3 @@ static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t
 /**
   * @}
   */
-

@@ -1,12 +1,14 @@
 /**
   ******************************************************************************
-  * @file    stm32f1xx_hal_dma.h
-  * @author  MCD Application Team
+  * @file    ls2k03xx_hal_dma.h
+  * @author  MCD Application Team (Original STM32 HAL)
+  * @author  Ilikara <3435193369@qq.com> (Ported for LS2K03xx)
   * @brief   Header file of DMA HAL module.
   ******************************************************************************
   * @attention
   *
   * Copyright (c) 2016 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file in
@@ -14,20 +16,25 @@
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
+  * @note
+  * This file is based on STM32 HAL library, ported and modified for 
+  * Loongson LS2K03xx series processors.
+  *
+  ******************************************************************************
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F1xx_HAL_DMA_H
-#define __STM32F1xx_HAL_DMA_H
+#ifndef __LS2K03xx_HAL_DMA_H
+#define __LS2K03xx_HAL_DMA_H
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal_def.h"
+#include "ls2k03xx_hal_def.h"
 
-/** @addtogroup STM32F1xx_HAL_Driver
+/** @addtogroup LS2K03xx_HAL_Driver
   * @{
   */
 
@@ -239,34 +246,38 @@ typedef struct __DMA_HandleTypeDef
 /** @defgroup DMA_flag_definitions DMA flag definitions
   * @{
   */
-#define DMA_FLAG_GL1                      0x00000001U
-#define DMA_FLAG_TC1                      0x00000002U
-#define DMA_FLAG_HT1                      0x00000004U
-#define DMA_FLAG_TE1                      0x00000008U
-#define DMA_FLAG_GL2                      0x00000010U
-#define DMA_FLAG_TC2                      0x00000020U
-#define DMA_FLAG_HT2                      0x00000040U
-#define DMA_FLAG_TE2                      0x00000080U
-#define DMA_FLAG_GL3                      0x00000100U
-#define DMA_FLAG_TC3                      0x00000200U
-#define DMA_FLAG_HT3                      0x00000400U
-#define DMA_FLAG_TE3                      0x00000800U
-#define DMA_FLAG_GL4                      0x00001000U
-#define DMA_FLAG_TC4                      0x00002000U
-#define DMA_FLAG_HT4                      0x00004000U
-#define DMA_FLAG_TE4                      0x00008000U
-#define DMA_FLAG_GL5                      0x00010000U
-#define DMA_FLAG_TC5                      0x00020000U
-#define DMA_FLAG_HT5                      0x00040000U
-#define DMA_FLAG_TE5                      0x00080000U
-#define DMA_FLAG_GL6                      0x00100000U
-#define DMA_FLAG_TC6                      0x00200000U
-#define DMA_FLAG_HT6                      0x00400000U
-#define DMA_FLAG_TE6                      0x00800000U
-#define DMA_FLAG_GL7                      0x01000000U
-#define DMA_FLAG_TC7                      0x02000000U
-#define DMA_FLAG_HT7                      0x04000000U
-#define DMA_FLAG_TE7                      0x08000000U
+#define DMA_FLAG_GL0                      0x00000001U
+#define DMA_FLAG_TC0                      0x00000002U
+#define DMA_FLAG_HT0                      0x00000004U
+#define DMA_FLAG_TE0                      0x00000008U
+#define DMA_FLAG_GL1                      0x00000010U
+#define DMA_FLAG_TC1                      0x00000020U
+#define DMA_FLAG_HT1                      0x00000040U
+#define DMA_FLAG_TE1                      0x00000080U
+#define DMA_FLAG_GL2                      0x00000100U
+#define DMA_FLAG_TC2                      0x00000200U
+#define DMA_FLAG_HT2                      0x00000400U
+#define DMA_FLAG_TE2                      0x00000800U
+#define DMA_FLAG_GL3                      0x00001000U
+#define DMA_FLAG_TC3                      0x00002000U
+#define DMA_FLAG_HT3                      0x00004000U
+#define DMA_FLAG_TE3                      0x00008000U
+#define DMA_FLAG_GL4                      0x00010000U
+#define DMA_FLAG_TC4                      0x00020000U
+#define DMA_FLAG_HT4                      0x00040000U
+#define DMA_FLAG_TE4                      0x00080000U
+#define DMA_FLAG_GL5                      0x00100000U
+#define DMA_FLAG_TC5                      0x00200000U
+#define DMA_FLAG_HT5                      0x00400000U
+#define DMA_FLAG_TE5                      0x00800000U
+#define DMA_FLAG_GL6                      0x01000000U
+#define DMA_FLAG_TC6                      0x02000000U
+#define DMA_FLAG_HT6                      0x04000000U
+#define DMA_FLAG_TE6                      0x08000000U
+#define DMA_FLAG_GL7                      0x10000000U
+#define DMA_FLAG_TC7                      0x20000000U
+#define DMA_FLAG_HT7                      0x40000000U
+#define DMA_FLAG_TE7                      0x80000000U
 /**
   * @}
   */
@@ -352,7 +363,7 @@ typedef struct __DMA_HandleTypeDef
   */
 
 /* Include DMA HAL Extension module */
-#include "stm32f1xx_hal_dma_ex.h"   
+#include "ls2k03xx_hal_dma_ex.h"   
 
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup DMA_Exported_Functions
@@ -409,7 +420,7 @@ uint32_t HAL_DMA_GetError(DMA_HandleTypeDef *hdma);
                                      ((DIRECTION) == DMA_MEMORY_TO_PERIPH)  || \
                                      ((DIRECTION) == DMA_MEMORY_TO_MEMORY))
 
-#define IS_DMA_BUFFER_SIZE(SIZE) (((SIZE) >= 0x1U) && ((SIZE) < 0x10000U))
+#define IS_DMA_BUFFER_SIZE(SIZE) ((SIZE) >= 0x1U)
 
 #define IS_DMA_PERIPHERAL_INC_STATE(STATE) (((STATE) == DMA_PINC_ENABLE) || \
                                             ((STATE) == DMA_PINC_DISABLE))
@@ -451,5 +462,4 @@ uint32_t HAL_DMA_GetError(DMA_HandleTypeDef *hdma);
 }
 #endif
 
-#endif /* __STM32F1xx_HAL_DMA_H */
-
+#endif /* __LS2K03xx_HAL_DMA_H */
