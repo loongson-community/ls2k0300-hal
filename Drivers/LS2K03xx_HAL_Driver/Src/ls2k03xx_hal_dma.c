@@ -167,7 +167,7 @@ HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
   assert_param(IS_DMA_PRIORITY(hdma->Init.Priority));
 
   /* calculation of the channel index */
-  hdma->ChannelIndex = ((((uint32_t)hdma->Instance - (uint32_t)DMA_Channel0) / ((uint32_t)DMA_Channel1 - (uint32_t)DMA_Channel0)) << 2);
+  hdma->ChannelIndex = ((((uint64_t)hdma->Instance - (uint64_t)DMA_Channel0) / ((uint64_t)DMA_Channel1 - (uint64_t)DMA_Channel0)) << 2);
   hdma->DmaBaseAddress = DMA;
 
   /* Change DMA peripheral state */
@@ -234,7 +234,7 @@ HAL_StatusTypeDef HAL_DMA_DeInit(DMA_HandleTypeDef *hdma)
   hdma->Instance->CMAR = 0U;
 
   /* calculation of the channel index */
-  hdma->ChannelIndex = ((((uint32_t)hdma->Instance - (uint32_t)DMA_Channel0) / ((uint32_t)DMA_Channel1 - (uint32_t)DMA_Channel0)) << 2);
+  hdma->ChannelIndex = ((((uint64_t)hdma->Instance - (uint64_t)DMA_Channel0) / ((uint64_t)DMA_Channel1 - (uint64_t)DMA_Channel0)) << 2);
   hdma->DmaBaseAddress = DMA;
 
   /* Clear all flags */

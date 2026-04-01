@@ -56,13 +56,13 @@
   * @retval The specified transfer complete flag index.
   */
 #define __HAL_DMA_GET_TC_FLAG_INDEX(__HANDLE__) \
-(((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel0))? DMA_FLAG_TC0 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel1))? DMA_FLAG_TC1 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel2))? DMA_FLAG_TC2 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel3))? DMA_FLAG_TC3 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel4))? DMA_FLAG_TC4 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel5))? DMA_FLAG_TC5 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel6))? DMA_FLAG_TC6 :\
+(((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel0))? DMA_FLAG_TC0 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel1))? DMA_FLAG_TC1 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel2))? DMA_FLAG_TC2 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel3))? DMA_FLAG_TC3 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel4))? DMA_FLAG_TC4 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel5))? DMA_FLAG_TC5 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel6))? DMA_FLAG_TC6 :\
    DMA_FLAG_TC7)
 
 /**
@@ -71,13 +71,13 @@
   * @retval The specified half transfer complete flag index.
   */
 #define __HAL_DMA_GET_HT_FLAG_INDEX(__HANDLE__)\
-(((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel0))? DMA_FLAG_HT0 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel1))? DMA_FLAG_HT1 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel2))? DMA_FLAG_HT2 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel3))? DMA_FLAG_HT3 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel4))? DMA_FLAG_HT4 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel5))? DMA_FLAG_HT5 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel6))? DMA_FLAG_HT6 :\
+(((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel0))? DMA_FLAG_HT0 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel1))? DMA_FLAG_HT1 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel2))? DMA_FLAG_HT2 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel3))? DMA_FLAG_HT3 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel4))? DMA_FLAG_HT4 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel5))? DMA_FLAG_HT5 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel6))? DMA_FLAG_HT6 :\
    DMA_FLAG_HT7)
 
 /**
@@ -86,13 +86,13 @@
   * @retval The specified transfer error flag index.
   */
 #define __HAL_DMA_GET_TE_FLAG_INDEX(__HANDLE__)\
-(((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel0))? DMA_FLAG_TE0 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel1))? DMA_FLAG_TE1 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel2))? DMA_FLAG_TE2 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel3))? DMA_FLAG_TE3 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel4))? DMA_FLAG_TE4 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel5))? DMA_FLAG_TE5 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel6))? DMA_FLAG_TE6 :\
+(((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel0))? DMA_FLAG_TE0 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel1))? DMA_FLAG_TE1 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel2))? DMA_FLAG_TE2 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel3))? DMA_FLAG_TE3 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel4))? DMA_FLAG_TE4 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel5))? DMA_FLAG_TE5 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel6))? DMA_FLAG_TE6 :\
    DMA_FLAG_TE7)
 
 /**
@@ -101,13 +101,13 @@
   * @retval The specified transfer error flag index.
   */
 #define __HAL_DMA_GET_GI_FLAG_INDEX(__HANDLE__)\
-(((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel0))? DMA_FLAG_GL0 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel1))? DMA_FLAG_GL1 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel2))? DMA_FLAG_GL2 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel3))? DMA_FLAG_GL3 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel4))? DMA_FLAG_GL4 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel5))? DMA_FLAG_GL5 :\
- ((uint32_t)((__HANDLE__)->Instance) == ((uint32_t)DMA_Channel6))? DMA_FLAG_GL6 :\
+(((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel0))? DMA_FLAG_GL0 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel1))? DMA_FLAG_GL1 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel2))? DMA_FLAG_GL2 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel3))? DMA_FLAG_GL3 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel4))? DMA_FLAG_GL4 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel5))? DMA_FLAG_GL5 :\
+ ((uint64_t)((__HANDLE__)->Instance) == ((uint64_t)DMA_Channel6))? DMA_FLAG_GL6 :\
    DMA_FLAG_GL7)
 
 /**
