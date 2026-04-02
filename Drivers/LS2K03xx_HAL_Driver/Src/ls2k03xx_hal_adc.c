@@ -314,7 +314,7 @@
   /* Values defined to be higher than worst cases: low clocks freq,           */
   /* maximum prescaler.                                                       */
   /* Ex of profile low frequency : Clock source at 200 MHz, ADC clock         */
-  /* prescaler 1024, sampling time 13 ADC clock cycles, resolution 12 bits.   */
+  /* prescaler 2048, sampling time 13 ADC clock cycles, resolution 12 bits.   */
   /* Unit: ms                                                                 */
   #define ADC_ENABLE_TIMEOUT              1U
   #define ADC_DISABLE_TIMEOUT             1U

@@ -90,7 +90,7 @@ typedef struct
                                                   This parameter can be a value of @ref ADC_External_trigger_source_Regular */
   uint32_t ClockDivider;                     /*!< Specifies ADC clock divider.
                                                   This is a 10-bit value: bits[5:0] -> CLKDIV50 (CR1[29:24]), bits[9:6] -> CLKDIV96 (CR2[29:26]).
-                                                  ADC_CLK = APB_FREQ / (ClockDivider + 1)
+                                                  ADC_CLK = APB_FREQ / (ClockDivider + 1) / 2
                                                   This parameter must be a number between Min_Data = 0 and Max_Data = 1023. */
 }ADC_InitTypeDef;
 
@@ -640,12 +640,12 @@ typedef  void (*pADC_CallbackTypeDef)(ADC_HandleTypeDef *hadc); /*!< pointer to 
   * @brief Get ADC clock frequency
   * @param __HANDLE__: ADC handle
   * @retval ADC clock frequency in Hz
-  * @note  ADC clock = APB_FREQ / (ADC_ClkDivider + 1)
+  * @note  ADC clock = APB_FREQ / (ADC_ClkDivider + 1) / 2
   *        ADC_ClkDivider is 10-bit: CLKDIV96 (bits[29:26] of CR2) << 6 | CLKDIV50 (bits[29:24] of CR1)
   */
 #define ADC_GET_CLKFREQ(__HANDLE__)                                              \
   ((APB_FREQ) / ((((READ_BIT((__HANDLE__)->Instance->CR2, ADC_CR2_CLKDIV96) >> ADC_CR2_CLKDIV96_Pos) << 6) | \
-                  ((READ_BIT((__HANDLE__)->Instance->CR1, ADC_CR1_CLKDIV50) >> ADC_CR1_CLKDIV50_Pos))) + 1))
+                  ((READ_BIT((__HANDLE__)->Instance->CR1, ADC_CR1_CLKDIV50) >> ADC_CR1_CLKDIV50_Pos))) + 1) / 2)
 
 /**
   * @brief Simultaneously clears and sets specific bits of the handle State

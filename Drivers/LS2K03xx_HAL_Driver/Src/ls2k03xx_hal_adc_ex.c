@@ -65,7 +65,7 @@
   /* Value defined to be higher than worst cases: low clocks freq,            */
   /* maximum prescaler.                                                       */
   /* Ex of profile low frequency : Clock source at 200 MHz, ADC clock         */
-  /* prescaler 1024, sampling time 13 ADC clock cycles, resolution 12 bits.   */
+  /* prescaler 2048, sampling time 13 ADC clock cycles, resolution 12 bits.   */
   /* Unit: ms                                                                 */
   #define ADC_CALIBRATION_TIMEOUT          1U
 
@@ -737,8 +737,7 @@ __weak void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 HAL_StatusTypeDef HAL_ADCEx_InjectedConfigChannel(ADC_HandleTypeDef* hadc, ADC_InjectionConfTypeDef* sConfigInjected)
 {
   HAL_StatusTypeDef tmp_hal_status = HAL_OK;
-  __IO uint32_t wait_loop_index = 0U;
-  
+
   /* Check the parameters */
   assert_param(IS_ADC_ALL_INSTANCE(hadc->Instance));
   assert_param(IS_ADC_CHANNEL(sConfigInjected->InjectedChannel));
