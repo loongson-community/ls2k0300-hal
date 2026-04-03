@@ -195,6 +195,10 @@ typedef struct
   __IO uint32_t              PreviousState;  /*!< I2C communication Previous state and mode
                                                   context for internal usage               */
 
+  DMA_HandleTypeDef          *hdmatx;        /*!< I2C Tx DMA handle parameters             */
+
+  DMA_HandleTypeDef          *hdmarx;        /*!< I2C Rx DMA handle parameters             */
+
   HAL_LockTypeDef            Lock;           /*!< I2C locking object                       */
 
   __IO HAL_I2C_StateTypeDef  State;          /*!< I2C communication state                  */
@@ -550,6 +554,19 @@ HAL_StatusTypeDef HAL_I2C_Slave_Seq_Receive_IT(I2C_HandleTypeDef *hi2c, uint8_t 
 HAL_StatusTypeDef HAL_I2C_EnableListen_IT(I2C_HandleTypeDef *hi2c);
 HAL_StatusTypeDef HAL_I2C_DisableListen_IT(I2C_HandleTypeDef *hi2c);
 HAL_StatusTypeDef HAL_I2C_Master_Abort_IT(I2C_HandleTypeDef *hi2c, uint16_t DevAddress);
+
+/******* Non-Blocking mode: DMA */
+HAL_StatusTypeDef HAL_I2C_Master_Transmit_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size);
+HAL_StatusTypeDef HAL_I2C_Master_Receive_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size);
+HAL_StatusTypeDef HAL_I2C_Slave_Transmit_DMA(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint16_t Size);
+HAL_StatusTypeDef HAL_I2C_Slave_Receive_DMA(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint16_t Size);
+HAL_StatusTypeDef HAL_I2C_Mem_Write_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size);
+HAL_StatusTypeDef HAL_I2C_Mem_Read_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size);
+
+HAL_StatusTypeDef HAL_I2C_Master_Seq_Transmit_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t XferOptions);
+HAL_StatusTypeDef HAL_I2C_Master_Seq_Receive_DMA(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t XferOptions);
+HAL_StatusTypeDef HAL_I2C_Slave_Seq_Transmit_DMA(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint16_t Size, uint32_t XferOptions);
+HAL_StatusTypeDef HAL_I2C_Slave_Seq_Receive_DMA(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint16_t Size, uint32_t XferOptions);
 /**
   * @}
   */
@@ -610,7 +627,8 @@ uint32_t HAL_I2C_GetError(I2C_HandleTypeDef *hi2c);
 #define I2C_MIN_APB_FREQ(__APB__, __SPEED__)             (((__SPEED__) <= 100000U) ? ((__APB__) < I2C_MIN_APB_FREQ_STANDARD) : ((__APB__) < I2C_MIN_APB_FREQ_FAST))
 #define I2C_CCR_CALCULATION(__APB__, __SPEED__, __COEFF__)     (((((__APB__) - 1U)/((__SPEED__) * (__COEFF__))) + 1U) & I2C_CCR_CCR)
 #define I2C_FREQRANGE(__APB__)                            ((__APB__)/1000000U)
-#define I2C_RISE_TIME(__FREQRANGE__, __SPEED__)            (((__SPEED__) <= 100000U) ? ((__FREQRANGE__) + 1U) : ((((__FREQRANGE__) * 300U) / 1000U) + 1U))
+// #define I2C_RISE_TIME(__FREQRANGE__, __SPEED__)            (((__SPEED__) <= 100000U) ? ((__FREQRANGE__) + 1U) : ((((__FREQRANGE__) * 300U) / 1000U) + 1U))
+#define I2C_RISE_TIME(__FREQRANGE__, __SPEED__)            (0b111111)
 #define I2C_SPEED_STANDARD(__APB__, __SPEED__)            ((I2C_CCR_CALCULATION((__APB__), (__SPEED__), 2U) < 4U)? 4U:I2C_CCR_CALCULATION((__APB__), (__SPEED__), 2U))
 #define I2C_SPEED_FAST(__APB__, __SPEED__, __DUTYCYCLE__) (((__DUTYCYCLE__) == I2C_DUTYCYCLE_2)? I2C_CCR_CALCULATION((__APB__), (__SPEED__), 3U) : (I2C_CCR_CALCULATION((__APB__), (__SPEED__), 25U) | I2C_DUTYCYCLE_16_9))
 #define I2C_SPEED(__APB__, __SPEED__, __DUTYCYCLE__)      (((__SPEED__) <= 100000U)? (I2C_SPEED_STANDARD((__APB__), (__SPEED__))) : \
