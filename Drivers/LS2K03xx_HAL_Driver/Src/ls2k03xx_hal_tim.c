@@ -8,18 +8,26 @@
   *          functionalities of the Timer (TIM) peripheral:
   *           + TIM Time Base Initialization
   *           + TIM Time Base Start
+  *           + TIM Time Base Start Interruption
+  *           + TIM Time Base Start DMA
   *           + TIM Output Compare/PWM Initialization
   *           + TIM Output Compare/PWM Channel Configuration
   *           + TIM Output Compare/PWM  Start
+  *           + TIM Output Compare/PWM  Start Interruption
+  *           + TIM Output Compare/PWM Start DMA
   *           + TIM Input Capture Initialization
   *           + TIM Input Capture Channel Configuration
   *           + TIM Input Capture Start
+  *           + TIM Input Capture Start Interruption
+  *           + TIM Input Capture Start DMA
   *           + TIM One Pulse Initialization
   *           + TIM One Pulse Channel Configuration
   *           + TIM One Pulse Start
   *           + TIM Encoder Interface Initialization
   *           + TIM Encoder Interface Start
-  *           + Commutation Event configuration
+  *           + TIM Encoder Interface Start Interruption
+  *           + TIM Encoder Interface Start DMA
+  *           + Commutation Event configuration with Interruption and DMA
   *           + TIM OCRef clear configuration
   *           + TIM External Clock configuration
   ******************************************************************************
@@ -101,7 +109,8 @@
            (++) One-pulse mode output : HAL_TIM_OnePulse_Start(), HAL_TIM_OnePulse_Start_IT()
            (++) Encoder mode output : HAL_TIM_Encoder_Start(), HAL_TIM_Encoder_Start_DMA(), HAL_TIM_Encoder_Start_IT().
 
-     (#) The DMA Burst is managed with the two following functions:
+     (#) The DMA Burst is managed with the two following functions (Not useable for now, because DCR,
+         DMAR registers are not designed in LS2K03xx):
          HAL_TIM_DMABurst_WriteStart()
          HAL_TIM_DMABurst_ReadStart()
 
@@ -183,6 +192,7 @@ all interrupt callbacks are set to the corresponding weak functions:
 
 /* Includes ------------------------------------------------------------------*/
 #include "ls2k03xx_hal.h"
+#include "ls2k03xx_hal_def.h"
 
 /** @addtogroup LS2K03xx_HAL_Driver
   * @{
@@ -215,6 +225,11 @@ static void TIM_TI3_SetConfig(TIM_TypeDef *TIMx, uint32_t TIM_ICPolarity, uint32
 static void TIM_TI4_SetConfig(TIM_TypeDef *TIMx, uint32_t TIM_ICPolarity, uint32_t TIM_ICSelection,
                               uint32_t TIM_ICFilter);
 static void TIM_ITRx_SetConfig(TIM_TypeDef *TIMx, uint32_t InputTriggerSource);
+static void TIM_DMAPeriodElapsedCplt(DMA_HandleTypeDef *hdma);
+static void TIM_DMAPeriodElapsedHalfCplt(DMA_HandleTypeDef *hdma);
+static void TIM_DMADelayPulseCplt(DMA_HandleTypeDef *hdma);
+static void TIM_DMATriggerCplt(DMA_HandleTypeDef *hdma);
+static void TIM_DMATriggerHalfCplt(DMA_HandleTypeDef *hdma);
 static HAL_StatusTypeDef TIM_SlaveTimer_SetConfig(TIM_HandleTypeDef *htim,
                                                   const TIM_SlaveConfigTypeDef *sSlaveConfig);
 /**
@@ -434,6 +449,169 @@ HAL_StatusTypeDef HAL_TIM_Base_Stop(TIM_HandleTypeDef *htim)
 {
   /* Check the parameters */
   assert_param(IS_TIM_INSTANCE(htim->Instance));
+
+  /* Disable the Peripheral */
+  __HAL_TIM_DISABLE(htim);
+
+  /* Set the TIM state */
+  htim->State = HAL_TIM_STATE_READY;
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Starts the TIM Base generation in interrupt mode.
+  * @param  htim TIM Base handle
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Base_Start_IT(TIM_HandleTypeDef *htim)
+{
+  uint32_t tmpsmcr;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_INSTANCE(htim->Instance));
+
+  /* Check the TIM state */
+  if (htim->State != HAL_TIM_STATE_READY)
+  {
+    return HAL_ERROR;
+  }
+
+  /* Set the TIM state */
+  htim->State = HAL_TIM_STATE_BUSY;
+
+  /* Enable the TIM Update interrupt */
+  __HAL_TIM_ENABLE_IT(htim, TIM_IT_UPDATE);
+
+  /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+  if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+  {
+    tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+    if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+  else
+  {
+    __HAL_TIM_ENABLE(htim);
+  }
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Stops the TIM Base generation in interrupt mode.
+  * @param  htim TIM Base handle
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Base_Stop_IT(TIM_HandleTypeDef *htim)
+{
+  /* Check the parameters */
+  assert_param(IS_TIM_INSTANCE(htim->Instance));
+
+  /* Disable the TIM Update interrupt */
+  __HAL_TIM_DISABLE_IT(htim, TIM_IT_UPDATE);
+
+  /* Disable the Peripheral */
+  __HAL_TIM_DISABLE(htim);
+
+  /* Set the TIM state */
+  htim->State = HAL_TIM_STATE_READY;
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Starts the TIM Base generation in DMA mode.
+  * @param  htim TIM Base handle
+  * @param  pData The source Buffer address.
+  * @param  Length The length of data to be transferred from memory to peripheral.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Base_Start_DMA(TIM_HandleTypeDef *htim, const uint32_t *pData, uint16_t Length)
+{
+  uint32_t tmpsmcr;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_DMA_INSTANCE(htim->Instance));
+
+  /* Set the TIM state */
+  if (htim->State == HAL_TIM_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+  else if (htim->State == HAL_TIM_STATE_READY)
+  {
+    if ((pData == NULL) || (Length == 0U))
+    {
+      return HAL_ERROR;
+    }
+    else
+    {
+      htim->State = HAL_TIM_STATE_BUSY;
+    }
+  }
+  else
+  {
+    return HAL_ERROR;
+  }
+
+  /* Set the DMA Period elapsed callbacks */
+  htim->hdma[TIM_DMA_ID_UPDATE]->XferCpltCallback = TIM_DMAPeriodElapsedCplt;
+  htim->hdma[TIM_DMA_ID_UPDATE]->XferHalfCpltCallback = TIM_DMAPeriodElapsedHalfCplt;
+
+  /* Set the DMA error callback */
+  htim->hdma[TIM_DMA_ID_UPDATE]->XferErrorCallback = TIM_DMAError ;
+
+  /* Enable the DMA channel */
+  if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_UPDATE],
+                       (uint32_t)(uint64_t)pData,
+                       (uint32_t)(uint64_t)&htim->Instance->ARR,
+                       Length) != HAL_OK)
+  {
+    /* Return error status */
+    return HAL_ERROR;
+  }
+
+  /* Enable the TIM Update DMA request */
+  __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_UPDATE);
+
+  /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+  if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+  {
+    tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+    if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+  else
+  {
+    __HAL_TIM_ENABLE(htim);
+  }
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Stops the TIM Base generation in DMA mode.
+  * @param  htim TIM Base handle
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Base_Stop_DMA(TIM_HandleTypeDef *htim)
+{
+  /* Check the parameters */
+  assert_param(IS_TIM_DMA_INSTANCE(htim->Instance));
+
+  /* Disable the TIM Update DMA request */
+  __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_UPDATE);
+
+  (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_UPDATE]);
 
   /* Disable the Peripheral */
   __HAL_TIM_DISABLE(htim);
@@ -698,6 +876,423 @@ HAL_StatusTypeDef HAL_TIM_OC_Stop(TIM_HandleTypeDef *htim, uint32_t Channel)
 }
 
 /**
+  * @brief  Starts the TIM Output Compare signal generation in interrupt mode.
+  * @param  htim TIM Output Compare handle
+  * @param  Channel TIM Channel to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_OC_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+  uint32_t tmpsmcr;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  /* Check the TIM channel state */
+  if (TIM_CHANNEL_STATE_GET(htim, Channel) != HAL_TIM_CHANNEL_STATE_READY)
+  {
+    return HAL_ERROR;
+  }
+
+  /* Set the TIM channel state */
+  TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Enable the TIM Capture/Compare 1 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Enable the TIM Capture/Compare 2 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Enable the TIM Capture/Compare 3 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Enable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Enable the Output compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_ENABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Enable the main output */
+      __HAL_TIM_MOE_ENABLE(htim);
+    }
+
+    /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+    if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+    {
+      tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+      if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+      {
+        __HAL_TIM_ENABLE(htim);
+      }
+    }
+    else
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Stops the TIM Output Compare signal generation in interrupt mode.
+  * @param  htim TIM Output Compare handle
+  * @param  Channel TIM Channel to be disabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_OC_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Disable the TIM Capture/Compare 1 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Disable the TIM Capture/Compare 2 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Disable the TIM Capture/Compare 3 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Disable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the Output compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_DISABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Disable the Main Output */
+      __HAL_TIM_MOE_DISABLE(htim);
+    }
+
+    /* Disable the Peripheral */
+    __HAL_TIM_DISABLE(htim);
+
+    /* Set the TIM channel state */
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Starts the TIM Output Compare signal generation in DMA mode.
+  * @param  htim TIM Output Compare handle
+  * @param  Channel TIM Channel to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @param  pData The source Buffer address.
+  * @param  Length The length of data to be transferred from memory to TIM peripheral
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_OC_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, const uint32_t *pData,
+                                       uint16_t Length)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+  uint32_t tmpsmcr;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  /* Set the TIM channel state */
+  if (TIM_CHANNEL_STATE_GET(htim, Channel) == HAL_TIM_CHANNEL_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+  else if (TIM_CHANNEL_STATE_GET(htim, Channel) == HAL_TIM_CHANNEL_STATE_READY)
+  {
+    if ((pData == NULL) || (Length == 0U))
+    {
+      return HAL_ERROR;
+    }
+    else
+    {
+      TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+    }
+  }
+  else
+  {
+    return HAL_ERROR;
+  }
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC1]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC1]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC1]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC1],
+                           (uint32_t)(uint64_t)pData,
+                           (uint32_t)(uint64_t)&htim->Instance->CCR1,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+
+      /* Enable the TIM Capture/Compare 1 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC2]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC2]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC2]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC2],
+                           (uint32_t)(uint64_t)pData,
+                           (uint32_t)(uint64_t)&htim->Instance->CCR2,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+
+      /* Enable the TIM Capture/Compare 2 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC3]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC3]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC3]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC3], (uint32_t)(uint64_t)pData, (uint32_t)(uint64_t)&htim->Instance->CCR3,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 3 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC4]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC4]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC4]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC4], (uint32_t)(uint64_t)pData, (uint32_t)(uint64_t)&htim->Instance->CCR4,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 4 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Enable the Output compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_ENABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Enable the main output */
+      __HAL_TIM_MOE_ENABLE(htim);
+    }
+
+    /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+    if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+    {
+      tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+      if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+      {
+        __HAL_TIM_ENABLE(htim);
+      }
+    }
+    else
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Stops the TIM Output Compare signal generation in DMA mode.
+  * @param  htim TIM Output Compare handle
+  * @param  Channel TIM Channel to be disabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_OC_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Disable the TIM Capture/Compare 1 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC1);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC1]);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Disable the TIM Capture/Compare 2 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC2);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC2]);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Disable the TIM Capture/Compare 3 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC3);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC3]);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Disable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC4);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC4]);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the Output compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_DISABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Disable the Main Output */
+      __HAL_TIM_MOE_DISABLE(htim);
+    }
+
+    /* Disable the Peripheral */
+    __HAL_TIM_DISABLE(htim);
+
+    /* Set the TIM channel state */
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
   * @}
   */
 
@@ -950,6 +1545,426 @@ HAL_StatusTypeDef HAL_TIM_PWM_Stop(TIM_HandleTypeDef *htim, uint32_t Channel)
 }
 
 /**
+  * @brief  Starts the PWM signal generation in interrupt mode.
+  * @param  htim TIM PWM handle
+  * @param  Channel TIM Channel to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_PWM_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+  uint32_t tmpsmcr;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  /* Check the TIM channel state */
+  if (TIM_CHANNEL_STATE_GET(htim, Channel) != HAL_TIM_CHANNEL_STATE_READY)
+  {
+    return HAL_ERROR;
+  }
+
+  /* Set the TIM channel state */
+  TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Enable the TIM Capture/Compare 1 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Enable the TIM Capture/Compare 2 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Enable the TIM Capture/Compare 3 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Enable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Enable the Capture compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_ENABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Enable the main output */
+      __HAL_TIM_MOE_ENABLE(htim);
+    }
+
+    /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+    if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+    {
+      tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+      if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+      {
+        __HAL_TIM_ENABLE(htim);
+      }
+    }
+    else
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Stops the PWM signal generation in interrupt mode.
+  * @param  htim TIM PWM handle
+  * @param  Channel TIM Channels to be disabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_PWM_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Disable the TIM Capture/Compare 1 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Disable the TIM Capture/Compare 2 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Disable the TIM Capture/Compare 3 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Disable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the Capture compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_DISABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Disable the Main Output */
+      __HAL_TIM_MOE_DISABLE(htim);
+    }
+
+    /* Disable the Peripheral */
+    __HAL_TIM_DISABLE(htim);
+
+    /* Set the TIM channel state */
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Starts the TIM PWM signal generation in DMA mode.
+  * @param  htim TIM PWM handle
+  * @param  Channel TIM Channels to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @param  pData The source Buffer address.
+  * @param  Length The length of data to be transferred from memory to TIM peripheral
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, const uint32_t *pData,
+                                        uint16_t Length)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+  uint32_t tmpsmcr;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  /* Set the TIM channel state */
+  if (TIM_CHANNEL_STATE_GET(htim, Channel) == HAL_TIM_CHANNEL_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+  else if (TIM_CHANNEL_STATE_GET(htim, Channel) == HAL_TIM_CHANNEL_STATE_READY)
+  {
+    if ((pData == NULL) || (Length == 0U))
+    {
+      return HAL_ERROR;
+    }
+    else
+    {
+      TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+    }
+  }
+  else
+  {
+    return HAL_ERROR;
+  }
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC1]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC1]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC1]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC1],
+                           (uint32_t)(uint64_t)pData,
+                           (uint32_t)(uint64_t)&htim->Instance->CCR1,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+
+      /* Enable the TIM Capture/Compare 1 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC2]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC2]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC2]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC2],
+                           (uint32_t)(uint64_t)pData,
+                           (uint32_t)(uint64_t)&htim->Instance->CCR2,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 2 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC3]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC3]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC3]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC3],
+                           (uint32_t)(uint64_t)pData,
+                           (uint32_t)(uint64_t)&htim->Instance->CCR3,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Output Capture/Compare 3 request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Set the DMA compare callbacks */
+      htim->hdma[TIM_DMA_ID_CC4]->XferCpltCallback = TIM_DMADelayPulseCplt;
+      htim->hdma[TIM_DMA_ID_CC4]->XferHalfCpltCallback = TIM_DMADelayPulseHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC4]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC4],
+                           (uint32_t)(uint64_t)pData,
+                           (uint32_t)(uint64_t)&htim->Instance->CCR4,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 4 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Enable the Capture compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_ENABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Enable the main output */
+      __HAL_TIM_MOE_ENABLE(htim);
+    }
+
+    /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+    if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+    {
+      tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+      if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+      {
+        __HAL_TIM_ENABLE(htim);
+      }
+    }
+    else
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Stops the TIM PWM signal generation in DMA mode.
+  * @param  htim TIM PWM handle
+  * @param  Channel TIM Channels to be disabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_PWM_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Disable the TIM Capture/Compare 1 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC1);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC1]);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Disable the TIM Capture/Compare 2 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC2);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC2]);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Disable the TIM Capture/Compare 3 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC3);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC3]);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Disable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC4);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC4]);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the Capture compare channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_DISABLE);
+
+    if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+    {
+      /* Disable the Main Output */
+      __HAL_TIM_MOE_DISABLE(htim);
+    }
+
+    /* Disable the Peripheral */
+    __HAL_TIM_DISABLE(htim);
+
+    /* Set the TIM channel state */
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
   * @}
   */
 
@@ -1192,6 +2207,412 @@ HAL_StatusTypeDef HAL_TIM_IC_Stop(TIM_HandleTypeDef *htim, uint32_t Channel)
 
   /* Return function status */
   return HAL_OK;
+}
+
+/**
+  * @brief  Starts the TIM Input Capture measurement in interrupt mode.
+  * @param  htim TIM Input Capture handle
+  * @param  Channel TIM Channels to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_IC_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+  uint32_t tmpsmcr;
+
+  HAL_TIM_ChannelStateTypeDef channel_state = TIM_CHANNEL_STATE_GET(htim, Channel);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_state = TIM_CHANNEL_N_STATE_GET(htim, Channel);
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  /* Check the TIM channel state */
+  if ((channel_state != HAL_TIM_CHANNEL_STATE_READY)
+      || (complementary_channel_state != HAL_TIM_CHANNEL_STATE_READY))
+  {
+    return HAL_ERROR;
+  }
+
+  /* Set the TIM channel state */
+  TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+  TIM_CHANNEL_N_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Enable the TIM Capture/Compare 1 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Enable the TIM Capture/Compare 2 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Enable the TIM Capture/Compare 3 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Enable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Enable the Input Capture channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_ENABLE);
+
+    /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+    if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+    {
+      tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+      if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+      {
+        __HAL_TIM_ENABLE(htim);
+      }
+    }
+    else
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Stops the TIM Input Capture measurement in interrupt mode.
+  * @param  htim TIM Input Capture handle
+  * @param  Channel TIM Channels to be disabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_IC_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Disable the TIM Capture/Compare 1 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Disable the TIM Capture/Compare 2 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Disable the TIM Capture/Compare 3 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Disable the TIM Capture/Compare 4 interrupt */
+      __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the Input Capture channel */
+    TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_DISABLE);
+
+    /* Disable the Peripheral */
+    __HAL_TIM_DISABLE(htim);
+
+    /* Set the TIM channel state */
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Starts the TIM Input Capture measurement in DMA mode.
+  * @param  htim TIM Input Capture handle
+  * @param  Channel TIM Channels to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @param  pData The destination Buffer address.
+  * @param  Length The length of data to be transferred from TIM peripheral to memory.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_IC_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Length)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+  uint32_t tmpsmcr;
+
+  HAL_TIM_ChannelStateTypeDef channel_state = TIM_CHANNEL_STATE_GET(htim, Channel);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_state = TIM_CHANNEL_N_STATE_GET(htim, Channel);
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+  assert_param(IS_TIM_DMA_CC_INSTANCE(htim->Instance));
+
+  /* Set the TIM channel state */
+  if ((channel_state == HAL_TIM_CHANNEL_STATE_BUSY)
+      || (complementary_channel_state == HAL_TIM_CHANNEL_STATE_BUSY))
+  {
+    return HAL_BUSY;
+  }
+  else if ((channel_state == HAL_TIM_CHANNEL_STATE_READY)
+           && (complementary_channel_state == HAL_TIM_CHANNEL_STATE_READY))
+  {
+    if ((pData == NULL) || (Length == 0U))
+    {
+      return HAL_ERROR;
+    }
+    else
+    {
+      TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+      TIM_CHANNEL_N_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_BUSY);
+    }
+  }
+  else
+  {
+    return HAL_ERROR;
+  }
+
+  /* Enable the Input Capture channel */
+  TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_ENABLE);
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC1]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC1]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC1]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC1],
+                           (uint32_t)(uint64_t)&htim->Instance->CCR1,
+                           (uint32_t)(uint64_t)pData,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 1 DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC2]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC2]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC2]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC2],
+                           (uint32_t)(uint64_t)&htim->Instance->CCR2,
+                           (uint32_t)(uint64_t)pData,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 2  DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC2);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC3]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC3]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC3]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC3],
+                           (uint32_t)(uint64_t)&htim->Instance->CCR3,
+                           (uint32_t)(uint64_t)pData,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 3  DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC3);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC4]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC4]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC4]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC4],
+                           (uint32_t)(uint64_t)&htim->Instance->CCR4,
+                           (uint32_t)(uint64_t)pData,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Capture/Compare 4  DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC4);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  /* Enable the Peripheral, except in trigger mode where enable is automatically done with trigger */
+  if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+  {
+    tmpsmcr = htim->Instance->SMCR & TIM_SMCR_SMS;
+    if (!IS_TIM_SLAVEMODE_TRIGGER_ENABLED(tmpsmcr))
+    {
+      __HAL_TIM_ENABLE(htim);
+    }
+  }
+  else
+  {
+    __HAL_TIM_ENABLE(htim);
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Stops the TIM Input Capture measurement in DMA mode.
+  * @param  htim TIM Input Capture handle
+  * @param  Channel TIM Channels to be disabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_IC_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_CCX_INSTANCE(htim->Instance, Channel));
+  assert_param(IS_TIM_DMA_CC_INSTANCE(htim->Instance));
+
+  /* Disable the Input Capture channel */
+  TIM_CCxChannelCmd(htim->Instance, Channel, TIM_CCx_DISABLE);
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Disable the TIM Capture/Compare 1 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC1);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC1]);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Disable the TIM Capture/Compare 2 DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC2);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC2]);
+      break;
+    }
+
+    case TIM_CHANNEL_3:
+    {
+      /* Disable the TIM Capture/Compare 3  DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC3);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC3]);
+      break;
+    }
+
+    case TIM_CHANNEL_4:
+    {
+      /* Disable the TIM Capture/Compare 4  DMA request */
+      __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC4);
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC4]);
+      break;
+    }
+
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the Peripheral */
+    __HAL_TIM_DISABLE(htim);
+
+    /* Set the TIM channel state */
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return status;
 }
 /**
   * @}
@@ -1452,6 +2873,117 @@ HAL_StatusTypeDef HAL_TIM_OnePulse_Stop(TIM_HandleTypeDef *htim, uint32_t Output
   if TIM_CHANNEL_1 is used as input, the TIM_CHANNEL_2 will be used as output
   whatever the combination, the TIM_CHANNEL_1 and TIM_CHANNEL_2 should be disabled together */
 
+  TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+  TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_DISABLE);
+
+  if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+  {
+    /* Disable the Main Output */
+    __HAL_TIM_MOE_DISABLE(htim);
+  }
+
+  /* Disable the Peripheral */
+  __HAL_TIM_DISABLE(htim);
+
+  /* Set the TIM channels state */
+  TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+  TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+  TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+  TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Starts the TIM One Pulse signal generation in interrupt mode.
+  * @note Though OutputChannel parameter is deprecated and ignored by the function
+  *        it has been kept to avoid HAL_TIM API compatibility break.
+  * @note The pulse output channel is determined when calling
+  *       @ref HAL_TIM_OnePulse_ConfigChannel().
+  * @param  htim TIM One Pulse handle
+  * @param  OutputChannel See note above
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_OnePulse_Start_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel)
+{
+  HAL_TIM_ChannelStateTypeDef channel_1_state = TIM_CHANNEL_STATE_GET(htim, TIM_CHANNEL_1);
+  HAL_TIM_ChannelStateTypeDef channel_2_state = TIM_CHANNEL_STATE_GET(htim, TIM_CHANNEL_2);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_1_state = TIM_CHANNEL_N_STATE_GET(htim, TIM_CHANNEL_1);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_2_state = TIM_CHANNEL_N_STATE_GET(htim, TIM_CHANNEL_2);
+
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(OutputChannel);
+
+  /* Check the TIM channels state */
+  if ((channel_1_state != HAL_TIM_CHANNEL_STATE_READY)
+      || (channel_2_state != HAL_TIM_CHANNEL_STATE_READY)
+      || (complementary_channel_1_state != HAL_TIM_CHANNEL_STATE_READY)
+      || (complementary_channel_2_state != HAL_TIM_CHANNEL_STATE_READY))
+  {
+    return HAL_ERROR;
+  }
+
+  /* Set the TIM channels state */
+  TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+  TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+  TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+  TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+
+  /* Enable the Capture compare and the Input Capture channels
+    (in the OPM Mode the two possible channels that can be used are TIM_CHANNEL_1 and TIM_CHANNEL_2)
+    if TIM_CHANNEL_1 is used as output, the TIM_CHANNEL_2 will be used as input and
+    if TIM_CHANNEL_1 is used as input, the TIM_CHANNEL_2 will be used as output
+    whatever the combination, the TIM_CHANNEL_1 and TIM_CHANNEL_2 should be enabled together
+
+    No need to enable the counter, it's enabled automatically by hardware
+    (the counter starts in response to a stimulus and generate a pulse */
+
+  /* Enable the TIM Capture/Compare 1 interrupt */
+  __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
+
+  /* Enable the TIM Capture/Compare 2 interrupt */
+  __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC2);
+
+  TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+  TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_ENABLE);
+
+  if (IS_TIM_BREAK_INSTANCE(htim->Instance) != RESET)
+  {
+    /* Enable the main output */
+    __HAL_TIM_MOE_ENABLE(htim);
+  }
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Stops the TIM One Pulse signal generation in interrupt mode.
+  * @note Though OutputChannel parameter is deprecated and ignored by the function
+  *        it has been kept to avoid HAL_TIM API compatibility break.
+  * @note The pulse output channel is determined when calling
+  *       @ref HAL_TIM_OnePulse_ConfigChannel().
+  * @param  htim TIM One Pulse handle
+  * @param  OutputChannel See note above
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_OnePulse_Stop_IT(TIM_HandleTypeDef *htim, uint32_t OutputChannel)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(OutputChannel);
+
+  /* Disable the TIM Capture/Compare 1 interrupt */
+  __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC1);
+
+  /* Disable the TIM Capture/Compare 2 interrupt */
+  __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC2);
+
+  /* Disable the Capture compare and the Input Capture channels
+  (in the OPM Mode the two possible channels that can be used are TIM_CHANNEL_1 and TIM_CHANNEL_2)
+  if TIM_CHANNEL_1 is used as output, the TIM_CHANNEL_2 will be used as input and
+  if TIM_CHANNEL_1 is used as input, the TIM_CHANNEL_2 will be used as output
+  whatever the combination, the TIM_CHANNEL_1 and TIM_CHANNEL_2 should be disabled together */
   TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
   TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_DISABLE);
 
@@ -1830,6 +3362,456 @@ HAL_StatusTypeDef HAL_TIM_Encoder_Stop(TIM_HandleTypeDef *htim, uint32_t Channel
       TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_DISABLE);
       break;
     }
+  }
+
+  /* Disable the Peripheral */
+  __HAL_TIM_DISABLE(htim);
+
+  /* Set the TIM channel(s) state */
+  if ((Channel == TIM_CHANNEL_1) || (Channel == TIM_CHANNEL_2))
+  {
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+  else
+  {
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Starts the TIM Encoder Interface in interrupt mode.
+  * @param  htim TIM Encoder Interface handle
+  * @param  Channel TIM Channels to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_ALL: TIM Channel 1 and TIM Channel 2 are selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Encoder_Start_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  HAL_TIM_ChannelStateTypeDef channel_1_state = TIM_CHANNEL_STATE_GET(htim, TIM_CHANNEL_1);
+  HAL_TIM_ChannelStateTypeDef channel_2_state = TIM_CHANNEL_STATE_GET(htim, TIM_CHANNEL_2);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_1_state = TIM_CHANNEL_N_STATE_GET(htim, TIM_CHANNEL_1);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_2_state = TIM_CHANNEL_N_STATE_GET(htim, TIM_CHANNEL_2);
+
+  /* Check the parameters */
+  assert_param(IS_TIM_ENCODER_INTERFACE_INSTANCE(htim->Instance));
+
+  /* Set the TIM channel(s) state */
+  if (Channel == TIM_CHANNEL_1)
+  {
+    if ((channel_1_state != HAL_TIM_CHANNEL_STATE_READY)
+        || (complementary_channel_1_state != HAL_TIM_CHANNEL_STATE_READY))
+    {
+      return HAL_ERROR;
+    }
+    else
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+    }
+  }
+  else if (Channel == TIM_CHANNEL_2)
+  {
+    if ((channel_2_state != HAL_TIM_CHANNEL_STATE_READY)
+        || (complementary_channel_2_state != HAL_TIM_CHANNEL_STATE_READY))
+    {
+      return HAL_ERROR;
+    }
+    else
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+    }
+  }
+  else
+  {
+    if ((channel_1_state != HAL_TIM_CHANNEL_STATE_READY)
+        || (channel_2_state != HAL_TIM_CHANNEL_STATE_READY)
+        || (complementary_channel_1_state != HAL_TIM_CHANNEL_STATE_READY)
+        || (complementary_channel_2_state != HAL_TIM_CHANNEL_STATE_READY))
+    {
+      return HAL_ERROR;
+    }
+    else
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+    }
+  }
+
+  /* Enable the encoder interface channels */
+  /* Enable the capture compare Interrupts 1 and/or 2 */
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_ENABLE);
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+
+    default :
+    {
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_ENABLE);
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC1);
+      __HAL_TIM_ENABLE_IT(htim, TIM_IT_CC2);
+      break;
+    }
+  }
+
+  /* Enable the Peripheral */
+  __HAL_TIM_ENABLE(htim);
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Stops the TIM Encoder Interface in interrupt mode.
+  * @param  htim TIM Encoder Interface handle
+  * @param  Channel TIM Channels to be disabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_ALL: TIM Channel 1 and TIM Channel 2 are selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Encoder_Stop_IT(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  /* Check the parameters */
+  assert_param(IS_TIM_ENCODER_INTERFACE_INSTANCE(htim->Instance));
+
+  /* Disable the Input Capture channels 1 and 2
+    (in the EncoderInterface the two possible channels that can be used are TIM_CHANNEL_1 and TIM_CHANNEL_2) */
+  if (Channel == TIM_CHANNEL_1)
+  {
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+
+    /* Disable the capture compare Interrupts 1 */
+    __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC1);
+  }
+  else if (Channel == TIM_CHANNEL_2)
+  {
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_DISABLE);
+
+    /* Disable the capture compare Interrupts 2 */
+    __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC2);
+  }
+  else
+  {
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_DISABLE);
+
+    /* Disable the capture compare Interrupts 1 and 2 */
+    __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC1);
+    __HAL_TIM_DISABLE_IT(htim, TIM_IT_CC2);
+  }
+
+  /* Disable the Peripheral */
+  __HAL_TIM_DISABLE(htim);
+
+  /* Set the TIM channel(s) state */
+  if ((Channel == TIM_CHANNEL_1) || (Channel == TIM_CHANNEL_2))
+  {
+    TIM_CHANNEL_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, Channel, HAL_TIM_CHANNEL_STATE_READY);
+  }
+  else
+  {
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+    TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+  }
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Starts the TIM Encoder Interface in DMA mode.
+  * @param  htim TIM Encoder Interface handle
+  * @param  Channel TIM Channels to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_ALL: TIM Channel 1 and TIM Channel 2 are selected
+  * @param  pData1 The destination Buffer address for IC1.
+  * @param  pData2 The destination Buffer address for IC2.
+  * @param  Length The length of data to be transferred from TIM peripheral to memory.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Encoder_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData1,
+                                            uint32_t *pData2, uint16_t Length)
+{
+  HAL_TIM_ChannelStateTypeDef channel_1_state = TIM_CHANNEL_STATE_GET(htim, TIM_CHANNEL_1);
+  HAL_TIM_ChannelStateTypeDef channel_2_state = TIM_CHANNEL_STATE_GET(htim, TIM_CHANNEL_2);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_1_state = TIM_CHANNEL_N_STATE_GET(htim, TIM_CHANNEL_1);
+  HAL_TIM_ChannelStateTypeDef complementary_channel_2_state = TIM_CHANNEL_N_STATE_GET(htim, TIM_CHANNEL_2);
+
+  /* Check the parameters */
+  assert_param(IS_TIM_ENCODER_INTERFACE_INSTANCE(htim->Instance));
+
+  /* Set the TIM channel(s) state */
+  if (Channel == TIM_CHANNEL_1)
+  {
+    if ((channel_1_state == HAL_TIM_CHANNEL_STATE_BUSY)
+        || (complementary_channel_1_state == HAL_TIM_CHANNEL_STATE_BUSY))
+    {
+      return HAL_BUSY;
+    }
+    else if ((channel_1_state == HAL_TIM_CHANNEL_STATE_READY)
+             && (complementary_channel_1_state == HAL_TIM_CHANNEL_STATE_READY))
+    {
+      if ((pData1 == NULL) || (Length == 0U))
+      {
+        return HAL_ERROR;
+      }
+      else
+      {
+        TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+        TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+      }
+    }
+    else
+    {
+      return HAL_ERROR;
+    }
+  }
+  else if (Channel == TIM_CHANNEL_2)
+  {
+    if ((channel_2_state == HAL_TIM_CHANNEL_STATE_BUSY)
+        || (complementary_channel_2_state == HAL_TIM_CHANNEL_STATE_BUSY))
+    {
+      return HAL_BUSY;
+    }
+    else if ((channel_2_state == HAL_TIM_CHANNEL_STATE_READY)
+             && (complementary_channel_2_state == HAL_TIM_CHANNEL_STATE_READY))
+    {
+      if ((pData2 == NULL) || (Length == 0U))
+      {
+        return HAL_ERROR;
+      }
+      else
+      {
+        TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+        TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+      }
+    }
+    else
+    {
+      return HAL_ERROR;
+    }
+  }
+  else
+  {
+    if ((channel_1_state == HAL_TIM_CHANNEL_STATE_BUSY)
+        || (channel_2_state == HAL_TIM_CHANNEL_STATE_BUSY)
+        || (complementary_channel_1_state == HAL_TIM_CHANNEL_STATE_BUSY)
+        || (complementary_channel_2_state == HAL_TIM_CHANNEL_STATE_BUSY))
+    {
+      return HAL_BUSY;
+    }
+    else if ((channel_1_state == HAL_TIM_CHANNEL_STATE_READY)
+             && (channel_2_state == HAL_TIM_CHANNEL_STATE_READY)
+             && (complementary_channel_1_state == HAL_TIM_CHANNEL_STATE_READY)
+             && (complementary_channel_2_state == HAL_TIM_CHANNEL_STATE_READY))
+    {
+      if ((((pData1 == NULL) || (pData2 == NULL))) || (Length == 0U))
+      {
+        return HAL_ERROR;
+      }
+      else
+      {
+        TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+        TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+        TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_BUSY);
+        TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_BUSY);
+      }
+    }
+    else
+    {
+      return HAL_ERROR;
+    }
+  }
+
+  switch (Channel)
+  {
+    case TIM_CHANNEL_1:
+    {
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC1]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC1]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC1]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC1],
+                           (uint32_t)(uint64_t)&htim->Instance->CCR1,
+                           (uint32_t)(uint64_t)pData1,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Input Capture DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC1);
+
+      /* Enable the Capture compare channel */
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+
+      /* Enable the Peripheral */
+      __HAL_TIM_ENABLE(htim);
+
+      break;
+    }
+
+    case TIM_CHANNEL_2:
+    {
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC2]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC2]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC2]->XferErrorCallback = TIM_DMAError;
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC2],
+                           (uint32_t)(uint64_t)&htim->Instance->CCR2,
+                           (uint32_t)(uint64_t)pData2,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+      /* Enable the TIM Input Capture  DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC2);
+
+      /* Enable the Capture compare channel */
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_ENABLE);
+
+      /* Enable the Peripheral */
+      __HAL_TIM_ENABLE(htim);
+
+      break;
+    }
+
+    default:
+    {
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC1]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC1]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC1]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC1],
+                           (uint32_t)(uint64_t)&htim->Instance->CCR1,
+                           (uint32_t)(uint64_t)pData1,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+
+      /* Set the DMA capture callbacks */
+      htim->hdma[TIM_DMA_ID_CC2]->XferCpltCallback = TIM_DMACaptureCplt;
+      htim->hdma[TIM_DMA_ID_CC2]->XferHalfCpltCallback = TIM_DMACaptureHalfCplt;
+
+      /* Set the DMA error callback */
+      htim->hdma[TIM_DMA_ID_CC2]->XferErrorCallback = TIM_DMAError ;
+
+      /* Enable the DMA channel */
+      if (HAL_DMA_Start_IT(htim->hdma[TIM_DMA_ID_CC2], (uint32_t)(uint64_t)&htim->Instance->CCR2, (uint32_t)(uint64_t)pData2,
+                           Length) != HAL_OK)
+      {
+        /* Return error status */
+        return HAL_ERROR;
+      }
+
+      /* Enable the TIM Input Capture  DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC1);
+      /* Enable the TIM Input Capture  DMA request */
+      __HAL_TIM_ENABLE_DMA(htim, TIM_DMA_CC2);
+
+      /* Enable the Capture compare channel */
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+      TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_ENABLE);
+
+      /* Enable the Peripheral */
+      __HAL_TIM_ENABLE(htim);
+
+      break;
+    }
+  }
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+/**
+  * @brief  Stops the TIM Encoder Interface in DMA mode.
+  * @param  htim TIM Encoder Interface handle
+  * @param  Channel TIM Channels to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_ALL: TIM Channel 1 and TIM Channel 2 are selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_Encoder_Stop_DMA(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+  /* Check the parameters */
+  assert_param(IS_TIM_ENCODER_INTERFACE_INSTANCE(htim->Instance));
+
+  /* Disable the Input Capture channels 1 and 2
+    (in the EncoderInterface the two possible channels that can be used are TIM_CHANNEL_1 and TIM_CHANNEL_2) */
+  if (Channel == TIM_CHANNEL_1)
+  {
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+
+    /* Disable the capture compare DMA Request 1 */
+    __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC1);
+    (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC1]);
+  }
+  else if (Channel == TIM_CHANNEL_2)
+  {
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_DISABLE);
+
+    /* Disable the capture compare DMA Request 2 */
+    __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC2);
+    (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC2]);
+  }
+  else
+  {
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+    TIM_CCxChannelCmd(htim->Instance, TIM_CHANNEL_2, TIM_CCx_DISABLE);
+
+    /* Disable the capture compare DMA Request 1 and 2 */
+    __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC1);
+    __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_CC2);
+    (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC1]);
+    (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC2]);
   }
 
   /* Disable the Peripheral */
@@ -2494,6 +4476,338 @@ HAL_StatusTypeDef HAL_TIM_OnePulse_ConfigChannel(TIM_HandleTypeDef *htim,  TIM_O
   }
 }
 
+/**
+  * @brief  Configure the DMA Burst to transfer Data from the memory to the TIM peripheral
+  * @param  htim TIM handle
+  * @param  BurstBaseAddress TIM Base address from where the DMA  will start the Data write
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMABASE_CR1
+  *            @arg TIM_DMABASE_CR2
+  *            @arg TIM_DMABASE_SMCR
+  *            @arg TIM_DMABASE_DIER
+  *            @arg TIM_DMABASE_SR
+  *            @arg TIM_DMABASE_EGR
+  *            @arg TIM_DMABASE_CCMR1
+  *            @arg TIM_DMABASE_CCMR2
+  *            @arg TIM_DMABASE_CCER
+  *            @arg TIM_DMABASE_CNT
+  *            @arg TIM_DMABASE_PSC
+  *            @arg TIM_DMABASE_ARR
+  *            @arg TIM_DMABASE_RCR
+  *            @arg TIM_DMABASE_CCR1
+  *            @arg TIM_DMABASE_CCR2
+  *            @arg TIM_DMABASE_CCR3
+  *            @arg TIM_DMABASE_CCR4
+  *            @arg TIM_DMABASE_BDTR
+  * @param  BurstRequestSrc TIM DMA Request sources
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMA_UPDATE: TIM update Interrupt source
+  *            @arg TIM_DMA_CC1: TIM Capture Compare 1 DMA source
+  *            @arg TIM_DMA_CC2: TIM Capture Compare 2 DMA source
+  *            @arg TIM_DMA_CC3: TIM Capture Compare 3 DMA source
+  *            @arg TIM_DMA_CC4: TIM Capture Compare 4 DMA source
+  *            @arg TIM_DMA_COM: TIM Commutation DMA source
+  *            @arg TIM_DMA_TRIGGER: TIM Trigger DMA source
+  * @param  BurstBuffer The Buffer address.
+  * @param  BurstLength DMA Burst length. This parameter can be one value
+  *         between: TIM_DMABURSTLENGTH_1TRANSFER and TIM_DMABURSTLENGTH_18TRANSFERS.
+  * @note   This function should be used only when BurstLength is equal to DMA data transfer length.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_DMABurst_WriteStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
+                                              uint32_t BurstRequestSrc, const uint32_t *BurstBuffer,
+                                              uint32_t  BurstLength)
+{
+  HAL_StatusTypeDef status;
+
+  status = HAL_TIM_DMABurst_MultiWriteStart(htim, BurstBaseAddress, BurstRequestSrc, BurstBuffer, BurstLength,
+                                            ((BurstLength) >> 8U) + 1U);
+
+
+  return status;
+}
+
+/**
+  * @brief  Configure the DMA Burst to transfer multiple Data from the memory to the TIM peripheral
+  * @param  htim TIM handle
+  * @param  BurstBaseAddress TIM Base address from where the DMA will start the Data write
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMABASE_CR1
+  *            @arg TIM_DMABASE_CR2
+  *            @arg TIM_DMABASE_SMCR
+  *            @arg TIM_DMABASE_DIER
+  *            @arg TIM_DMABASE_SR
+  *            @arg TIM_DMABASE_EGR
+  *            @arg TIM_DMABASE_CCMR1
+  *            @arg TIM_DMABASE_CCMR2
+  *            @arg TIM_DMABASE_CCER
+  *            @arg TIM_DMABASE_CNT
+  *            @arg TIM_DMABASE_PSC
+  *            @arg TIM_DMABASE_ARR
+  *            @arg TIM_DMABASE_RCR
+  *            @arg TIM_DMABASE_CCR1
+  *            @arg TIM_DMABASE_CCR2
+  *            @arg TIM_DMABASE_CCR3
+  *            @arg TIM_DMABASE_CCR4
+  *            @arg TIM_DMABASE_BDTR
+  * @param  BurstRequestSrc TIM DMA Request sources
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMA_UPDATE: TIM update Interrupt source
+  *            @arg TIM_DMA_CC1: TIM Capture Compare 1 DMA source
+  *            @arg TIM_DMA_CC2: TIM Capture Compare 2 DMA source
+  *            @arg TIM_DMA_CC3: TIM Capture Compare 3 DMA source
+  *            @arg TIM_DMA_CC4: TIM Capture Compare 4 DMA source
+  *            @arg TIM_DMA_COM: TIM Commutation DMA source
+  *            @arg TIM_DMA_TRIGGER: TIM Trigger DMA source
+  * @param  BurstBuffer The Buffer address.
+  * @param  BurstLength DMA Burst length. This parameter can be one value
+  *         between: TIM_DMABURSTLENGTH_1TRANSFER and TIM_DMABURSTLENGTH_18TRANSFERS.
+  * @param  DataLength Data length. This parameter can be one value
+  *         between 1 and 0xFFFF.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_DMABurst_MultiWriteStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
+                                                   uint32_t BurstRequestSrc, const uint32_t *BurstBuffer,
+                                                   uint32_t  BurstLength,  uint32_t  DataLength)
+{
+  // Todo, 2k0300 is not desinged with DCR, DMAR
+  return HAL_ERROR;
+}
+
+/**
+  * @brief  Stops the TIM DMA Burst mode
+  * @param  htim TIM handle
+  * @param  BurstRequestSrc TIM DMA Request sources to disable
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_DMABurst_WriteStop(TIM_HandleTypeDef *htim, uint32_t BurstRequestSrc)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_DMA_SOURCE(BurstRequestSrc));
+
+  /* Abort the DMA transfer (at least disable the DMA channel) */
+  switch (BurstRequestSrc)
+  {
+    case TIM_DMA_UPDATE:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_UPDATE]);
+      break;
+    }
+    case TIM_DMA_CC1:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC1]);
+      break;
+    }
+    case TIM_DMA_CC2:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC2]);
+      break;
+    }
+    case TIM_DMA_CC3:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC3]);
+      break;
+    }
+    case TIM_DMA_CC4:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC4]);
+      break;
+    }
+    case TIM_DMA_COM:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_COMMUTATION]);
+      break;
+    }
+    case TIM_DMA_TRIGGER:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_TRIGGER]);
+      break;
+    }
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the TIM Update DMA request */
+    __HAL_TIM_DISABLE_DMA(htim, BurstRequestSrc);
+
+    /* Change the DMA burst operation state */
+    htim->DMABurstState = HAL_DMA_BURST_STATE_READY;
+  }
+
+  /* Return function status */
+  return status;
+}
+
+/**
+  * @brief  Configure the DMA Burst to transfer Data from the TIM peripheral to the memory
+  * @param  htim TIM handle
+  * @param  BurstBaseAddress TIM Base address from where the DMA  will start the Data read
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMABASE_CR1
+  *            @arg TIM_DMABASE_CR2
+  *            @arg TIM_DMABASE_SMCR
+  *            @arg TIM_DMABASE_DIER
+  *            @arg TIM_DMABASE_SR
+  *            @arg TIM_DMABASE_EGR
+  *            @arg TIM_DMABASE_CCMR1
+  *            @arg TIM_DMABASE_CCMR2
+  *            @arg TIM_DMABASE_CCER
+  *            @arg TIM_DMABASE_CNT
+  *            @arg TIM_DMABASE_PSC
+  *            @arg TIM_DMABASE_ARR
+  *            @arg TIM_DMABASE_RCR
+  *            @arg TIM_DMABASE_CCR1
+  *            @arg TIM_DMABASE_CCR2
+  *            @arg TIM_DMABASE_CCR3
+  *            @arg TIM_DMABASE_CCR4
+  *            @arg TIM_DMABASE_BDTR
+  * @param  BurstRequestSrc TIM DMA Request sources
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMA_UPDATE: TIM update Interrupt source
+  *            @arg TIM_DMA_CC1: TIM Capture Compare 1 DMA source
+  *            @arg TIM_DMA_CC2: TIM Capture Compare 2 DMA source
+  *            @arg TIM_DMA_CC3: TIM Capture Compare 3 DMA source
+  *            @arg TIM_DMA_CC4: TIM Capture Compare 4 DMA source
+  *            @arg TIM_DMA_COM: TIM Commutation DMA source
+  *            @arg TIM_DMA_TRIGGER: TIM Trigger DMA source
+  * @param  BurstBuffer The Buffer address.
+  * @param  BurstLength DMA Burst length. This parameter can be one value
+  *         between: TIM_DMABURSTLENGTH_1TRANSFER and TIM_DMABURSTLENGTH_18TRANSFERS.
+  * @note   This function should be used only when BurstLength is equal to DMA data transfer length.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_DMABurst_ReadStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
+                                             uint32_t BurstRequestSrc, uint32_t  *BurstBuffer, uint32_t  BurstLength)
+{
+  HAL_StatusTypeDef status;
+
+  status = HAL_TIM_DMABurst_MultiReadStart(htim, BurstBaseAddress, BurstRequestSrc, BurstBuffer, BurstLength,
+                                           ((BurstLength) >> 8U) + 1U);
+
+
+  return status;
+}
+
+/**
+  * @brief  Configure the DMA Burst to transfer Data from the TIM peripheral to the memory
+  * @param  htim TIM handle
+  * @param  BurstBaseAddress TIM Base address from where the DMA  will start the Data read
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMABASE_CR1
+  *            @arg TIM_DMABASE_CR2
+  *            @arg TIM_DMABASE_SMCR
+  *            @arg TIM_DMABASE_DIER
+  *            @arg TIM_DMABASE_SR
+  *            @arg TIM_DMABASE_EGR
+  *            @arg TIM_DMABASE_CCMR1
+  *            @arg TIM_DMABASE_CCMR2
+  *            @arg TIM_DMABASE_CCER
+  *            @arg TIM_DMABASE_CNT
+  *            @arg TIM_DMABASE_PSC
+  *            @arg TIM_DMABASE_ARR
+  *            @arg TIM_DMABASE_RCR
+  *            @arg TIM_DMABASE_CCR1
+  *            @arg TIM_DMABASE_CCR2
+  *            @arg TIM_DMABASE_CCR3
+  *            @arg TIM_DMABASE_CCR4
+  *            @arg TIM_DMABASE_BDTR
+  * @param  BurstRequestSrc TIM DMA Request sources
+  *         This parameter can be one of the following values:
+  *            @arg TIM_DMA_UPDATE: TIM update Interrupt source
+  *            @arg TIM_DMA_CC1: TIM Capture Compare 1 DMA source
+  *            @arg TIM_DMA_CC2: TIM Capture Compare 2 DMA source
+  *            @arg TIM_DMA_CC3: TIM Capture Compare 3 DMA source
+  *            @arg TIM_DMA_CC4: TIM Capture Compare 4 DMA source
+  *            @arg TIM_DMA_COM: TIM Commutation DMA source
+  *            @arg TIM_DMA_TRIGGER: TIM Trigger DMA source
+  * @param  BurstBuffer The Buffer address.
+  * @param  BurstLength DMA Burst length. This parameter can be one value
+  *         between: TIM_DMABURSTLENGTH_1TRANSFER and TIM_DMABURSTLENGTH_18TRANSFERS.
+  * @param  DataLength Data length. This parameter can be one value
+  *         between 1 and 0xFFFF.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_DMABurst_MultiReadStart(TIM_HandleTypeDef *htim, uint32_t BurstBaseAddress,
+                                                  uint32_t BurstRequestSrc, uint32_t  *BurstBuffer,
+                                                  uint32_t  BurstLength, uint32_t  DataLength)
+{
+  // Todo, 2k0300 is not desinged with DCR, DMAR
+  return HAL_ERROR;
+}
+
+/**
+  * @brief  Stop the DMA burst reading
+  * @param  htim TIM handle
+  * @param  BurstRequestSrc TIM DMA Request sources to disable.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_DMABurst_ReadStop(TIM_HandleTypeDef *htim, uint32_t BurstRequestSrc)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  /* Check the parameters */
+  assert_param(IS_TIM_DMA_SOURCE(BurstRequestSrc));
+
+  /* Abort the DMA transfer (at least disable the DMA channel) */
+  switch (BurstRequestSrc)
+  {
+    case TIM_DMA_UPDATE:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_UPDATE]);
+      break;
+    }
+    case TIM_DMA_CC1:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC1]);
+      break;
+    }
+    case TIM_DMA_CC2:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC2]);
+      break;
+    }
+    case TIM_DMA_CC3:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC3]);
+      break;
+    }
+    case TIM_DMA_CC4:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_CC4]);
+      break;
+    }
+    case TIM_DMA_COM:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_COMMUTATION]);
+      break;
+    }
+    case TIM_DMA_TRIGGER:
+    {
+      (void)HAL_DMA_Abort_IT(htim->hdma[TIM_DMA_ID_TRIGGER]);
+      break;
+    }
+    default:
+      status = HAL_ERROR;
+      break;
+  }
+
+  if (status == HAL_OK)
+  {
+    /* Disable the TIM Update DMA request */
+    __HAL_TIM_DISABLE_DMA(htim, BurstRequestSrc);
+
+    /* Change the DMA burst operation state */
+    htim->DMABurstState = HAL_DMA_BURST_STATE_READY;
+  }
+
+  /* Return function status */
+  return status;
+}
 
 /**
   * @brief  Generate a software event
@@ -2898,6 +5212,48 @@ HAL_StatusTypeDef HAL_TIM_SlaveConfigSynchro(TIM_HandleTypeDef *htim, const TIM_
 
   return HAL_OK;
 }
+
+/**
+  * @brief  Configures the TIM in Slave mode in interrupt mode
+  * @param  htim TIM handle.
+  * @param  sSlaveConfig pointer to a TIM_SlaveConfigTypeDef structure that
+  *         contains the selected trigger (internal trigger input, filtered
+  *         timer input or external trigger input) and the Slave mode
+  *         (Disable, Reset, Gated, Trigger, External clock mode 1).
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_SlaveConfigSynchro_IT(TIM_HandleTypeDef *htim,
+                                                const TIM_SlaveConfigTypeDef *sSlaveConfig)
+{
+  /* Check the parameters */
+  assert_param(IS_TIM_SLAVE_INSTANCE(htim->Instance));
+  assert_param(IS_TIM_SLAVE_MODE(sSlaveConfig->SlaveMode));
+  assert_param(IS_TIM_TRIGGER_SELECTION(sSlaveConfig->InputTrigger));
+
+  __HAL_LOCK(htim);
+
+  htim->State = HAL_TIM_STATE_BUSY;
+
+  if (TIM_SlaveTimer_SetConfig(htim, sSlaveConfig) != HAL_OK)
+  {
+    htim->State = HAL_TIM_STATE_READY;
+    __HAL_UNLOCK(htim);
+    return HAL_ERROR;
+  }
+
+  /* Enable Trigger Interrupt */
+  __HAL_TIM_ENABLE_IT(htim, TIM_IT_TRIGGER);
+
+  /* Disable Trigger DMA request */
+  __HAL_TIM_DISABLE_DMA(htim, TIM_DMA_TRIGGER);
+
+  htim->State = HAL_TIM_STATE_READY;
+
+  __HAL_UNLOCK(htim);
+
+  return HAL_OK;
+}
+
 /**
   * @brief  Read the captured value from Capture Compare unit
   * @param  htim TIM handle.
@@ -3789,6 +6145,323 @@ HAL_TIM_DMABurstStateTypeDef HAL_TIM_DMABurstState(const TIM_HandleTypeDef *htim
 /** @defgroup TIM_Private_Functions TIM Private Functions
   * @{
   */
+
+/**
+  * @brief  TIM DMA error callback
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+void TIM_DMAError(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (hdma == htim->hdma[TIM_DMA_ID_CC1])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_1;
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC2])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_2;
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC3])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_3;
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_3, HAL_TIM_CHANNEL_STATE_READY);
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC4])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_4;
+    TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_4, HAL_TIM_CHANNEL_STATE_READY);
+  }
+  else
+  {
+    htim->State = HAL_TIM_STATE_READY;
+  }
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->ErrorCallback(htim);
+#else
+  HAL_TIM_ErrorCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+
+  htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
+}
+
+/**
+  * @brief  TIM DMA Delay Pulse complete callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+static void TIM_DMADelayPulseCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (hdma == htim->hdma[TIM_DMA_ID_CC1])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_1;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC2])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_2;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC3])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_3;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_3, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC4])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_4;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_4, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else
+  {
+    /* nothing to do */
+  }
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->PWM_PulseFinishedCallback(htim);
+#else
+  HAL_TIM_PWM_PulseFinishedCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+
+  htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
+}
+
+/**
+  * @brief  TIM DMA Delay Pulse half complete callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+void TIM_DMADelayPulseHalfCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (hdma == htim->hdma[TIM_DMA_ID_CC1])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_1;
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC2])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_2;
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC3])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_3;
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC4])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_4;
+  }
+  else
+  {
+    /* nothing to do */
+  }
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->PWM_PulseFinishedHalfCpltCallback(htim);
+#else
+  HAL_TIM_PWM_PulseFinishedHalfCpltCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+
+  htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
+}
+
+/**
+  * @brief  TIM DMA Capture complete callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+void TIM_DMACaptureCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (hdma == htim->hdma[TIM_DMA_ID_CC1])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_1;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC2])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_2;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC3])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_3;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_3, HAL_TIM_CHANNEL_STATE_READY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_3, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC4])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_4;
+
+    if (hdma->Init.Mode == DMA_NORMAL)
+    {
+      TIM_CHANNEL_STATE_SET(htim, TIM_CHANNEL_4, HAL_TIM_CHANNEL_STATE_READY);
+      TIM_CHANNEL_N_STATE_SET(htim, TIM_CHANNEL_4, HAL_TIM_CHANNEL_STATE_READY);
+    }
+  }
+  else
+  {
+    /* nothing to do */
+  }
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->IC_CaptureCallback(htim);
+#else
+  HAL_TIM_IC_CaptureCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+
+  htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
+}
+
+/**
+  * @brief  TIM DMA Capture half complete callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+void TIM_DMACaptureHalfCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (hdma == htim->hdma[TIM_DMA_ID_CC1])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_1;
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC2])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_2;
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC3])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_3;
+  }
+  else if (hdma == htim->hdma[TIM_DMA_ID_CC4])
+  {
+    htim->Channel = HAL_TIM_ACTIVE_CHANNEL_4;
+  }
+  else
+  {
+    /* nothing to do */
+  }
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->IC_CaptureHalfCpltCallback(htim);
+#else
+  HAL_TIM_IC_CaptureHalfCpltCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+
+  htim->Channel = HAL_TIM_ACTIVE_CHANNEL_CLEARED;
+}
+
+/**
+  * @brief  TIM DMA Period Elapse complete callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+static void TIM_DMAPeriodElapsedCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (htim->hdma[TIM_DMA_ID_UPDATE]->Init.Mode == DMA_NORMAL)
+  {
+    htim->State = HAL_TIM_STATE_READY;
+  }
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->PeriodElapsedCallback(htim);
+#else
+  HAL_TIM_PeriodElapsedCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+}
+
+/**
+  * @brief  TIM DMA Period Elapse half complete callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+static void TIM_DMAPeriodElapsedHalfCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->PeriodElapsedHalfCpltCallback(htim);
+#else
+  HAL_TIM_PeriodElapsedHalfCpltCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+}
+
+/**
+  * @brief  TIM DMA Trigger callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+static void TIM_DMATriggerCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+  if (htim->hdma[TIM_DMA_ID_TRIGGER]->Init.Mode == DMA_NORMAL)
+  {
+    htim->State = HAL_TIM_STATE_READY;
+  }
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->TriggerCallback(htim);
+#else
+  HAL_TIM_TriggerCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+}
+
+/**
+  * @brief  TIM DMA Trigger half complete callback.
+  * @param  hdma pointer to DMA handle.
+  * @retval None
+  */
+static void TIM_DMATriggerHalfCplt(DMA_HandleTypeDef *hdma)
+{
+  TIM_HandleTypeDef *htim = (TIM_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
+
+#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+  htim->TriggerHalfCpltCallback(htim);
+#else
+  HAL_TIM_TriggerHalfCpltCallback(htim);
+#endif /* USE_HAL_TIM_REGISTER_CALLBACKS */
+}
 
 /**
   * @brief  Time Base configuration
