@@ -16,21 +16,23 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "ls2k03xx_it.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
 #define  PSC_VALUE          (uint32_t)((APB_FREQ / 2000000) - 1)
 #define  PERIOD_VALUE       (uint32_t)(500000 - 1)
-#define  PULSE3_VALUE       (uint32_t)(PERIOD_VALUE / 2)
-
-/* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* Timer handler declaration */
-TIM_HandleTypeDef    htim;
+UART_HandleTypeDef huart0;
+TIM_HandleTypeDef  htim;
+GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* Private function prototypes -----------------------------------------------*/
 static void TIM_Init(void);
+static void UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
+
 /**
   * @brief  The application entry point.
   * @retval int
@@ -40,15 +42,41 @@ int main(void)
   HAL_Init();
 
   /* Initialize all configured peripherals */
+  UART_Init();
   TIM_Init();
 
-  if (HAL_TIM_PWM_Start(&htim, TIM_CHANNEL_3) != HAL_OK)
+  GPIO_InitStruct.Dir = GPIO_DIR_OUTPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_GPIO;
+  GPIO_InitStruct.Pin = 83;
+  HAL_GPIO_Init(&GPIO_InitStruct);
+
+  if (HAL_TIM_Base_Start_IT(&htim) != HAL_OK)
   {
     Error_Handler();
   }
 
   while (1)
   {
+    HAL_UART_Transmit(&huart0, (uint8_t *)"Hello, World!\n", 14, -1);
+    HAL_Delay(500);
+  }
+}
+
+/**
+  * @brief UART0 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void UART_Init(void)
+{
+  huart0.Instance = UART0;
+  huart0.Init.BaudRate = 115200;
+  huart0.Init.WordLength = UART_WORDLENGTH_8B;
+  huart0.Init.StopBits = UART_STOPBITS_1;
+  huart0.Init.Parity = UART_PARITY_NONE;
+  if (HAL_UART_Init(&huart0) != HAL_OK)
+  {
+    Error_Handler();
   }
 }
 
@@ -61,8 +89,6 @@ static void TIM_Init(void)
 {
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
-  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
   htim.Instance = ATIM;
   htim.Init.Prescaler = PSC_VALUE;
   htim.Init.Period = PERIOD_VALUE;
@@ -89,28 +115,11 @@ static void TIM_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = PULSE3_VALUE;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 0;
-  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-  if (HAL_TIMEx_ConfigBreakDeadTime(&htim, &sBreakDeadTimeConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
+
+  HAL_LIOINTC_Init(ATIM_LIOINTC_IRQn / 32);
+  HAL_LIOINTC_Config(ATIM_LIOINTC_IRQn, LIOINTC_IRQ_TYPE_RISING);
+  HAL_LIOINTC_RegisterCallback(ATIM_LIOINTC_IRQn, ATIM_LIOINTC_IRQHandler);
+  HAL_LIOINTC_Enable(ATIM_LIOINTC_IRQn);
 }
 
 /**

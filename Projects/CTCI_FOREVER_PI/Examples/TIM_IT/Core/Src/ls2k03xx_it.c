@@ -1,8 +1,7 @@
 /**
   ******************************************************************************
-  * @file         ls2k03xx_hal_msp.c
-  * @brief        This file provides code for the MSP Initialization
-  *               and de-Initialization codes.
+  * @file    ls2k03xx_it.c
+  * @brief   Interrupt Service Routines.
   ******************************************************************************
   * @attention
   *
@@ -17,42 +16,19 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "ls2k03xx_it.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern TIM_HandleTypeDef  htim;
+extern UART_HandleTypeDef huart0;
 /* Private function prototypes -----------------------------------------------*/
-/* External functions --------------------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
 
-/**
-  * @brief TIM_Base MSP Initialization
-  * This function configures the hardware resources used in this example
-  * @param htim_base: TIM_Base handle pointer
-  * @retval None
-  */
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
+void ATIM_LIOINTC_IRQHandler(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(htim_base->Instance==ATIM)
-  {
-    // ATIM CH3 GPIO83
-    GPIO_InitStruct.Pin = 83;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_M;
-    HAL_GPIO_Init(&GPIO_InitStruct);
-  }
-}
-
-/**
-  * @brief TIM_Base MSP De-Initialization
-  * This function freeze the hardware resources used in this example
-  * @param htim_base: TIM_Base handle pointer
-  * @retval None
-  */
-void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
-{
-  if(htim_base->Instance==ATIM)
-  {
-    // Todo
-  }
+  HAL_UART_Transmit(&huart0, (uint8_t *)"Hello, IRQ!\n", 12, -1);
+  HAL_GPIO_TogglePin(83);
+	HAL_TIM_IRQHandler(&htim);
 }

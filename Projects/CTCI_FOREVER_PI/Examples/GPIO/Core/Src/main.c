@@ -1,14 +1,10 @@
 /**
   ******************************************************************************
-  * @file    GPIO/Core/Src/main.c
-  * @author  MCD Application Team
-  * @author  Ilikara <3435193369@qq.com>
-  * @brief   This sample code shows how to use LS2K03xx GPIO HAL API to control
-  *          a LED.
+  * @file           : main.c
+  * @brief          : Main program body
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2016 STMicroelectronics.
   * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
@@ -18,31 +14,21 @@
   *
   ******************************************************************************
   */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/** @addtogroup LS2K03xx_HAL_Examples
-  * @{
-  */
-
-/** @addtogroup GPIO_LED
-  * @{
-  */
-
+/* Private includes ----------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static GPIO_InitTypeDef GPIO_InitStruct;
-
 /* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
+/* Private user code ---------------------------------------------------------*/
 
 /**
-  * @brief  Main program.
-  * @param  None
-  * @retval None
+  * @brief  The application entry point.
+  * @retval int
   */
 int main(void)
 {
@@ -58,9 +44,25 @@ int main(void)
 }
 
 /**
-  * @}
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
   */
-
+void Error_Handler(void)
+{
+  __disable_irq();
+  while (1)
+  {
+  }
+}
+#ifdef USE_FULL_ASSERT
 /**
-  * @}
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
   */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+}
+#endif /* USE_FULL_ASSERT */

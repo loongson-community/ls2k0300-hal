@@ -36,7 +36,7 @@ set(LS2K_Drivers_Src
     ${LS2K_HAL_ROOT}/Src/ls2k03xx_hal_tim.c
     ${LS2K_HAL_ROOT}/Src/ls2k03xx_hal_tim_ex.c
     ${LS2K_HAL_ROOT}/Src/ls2k03xx_hal_liointc.c
-    ${LS2K_HAL_ROOT}/Src/ls2k03xx_hal_dma.c
+    ${LS2K_HAL_ROOT}/Src/ls2k03xx_hal_uart.c
 )
 
 # Link directories setup

@@ -25,33 +25,24 @@
 /* Private function prototypes -----------------------------------------------*/
 /* External functions --------------------------------------------------------*/
 
-/**
-  * @brief TIM_Base MSP Initialization
-  * This function configures the hardware resources used in this example
-  * @param htim_base: TIM_Base handle pointer
-  * @retval None
-  */
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
+void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(htim_base->Instance==ATIM)
+  if(huart->Instance==UART0)
   {
-    // ATIM CH3 GPIO83
-    GPIO_InitStruct.Pin = 83;
+    GPIO_InitStruct.Pin = 40;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_M;
+    HAL_GPIO_Init(&GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = 41;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_M;
     HAL_GPIO_Init(&GPIO_InitStruct);
   }
 }
 
-/**
-  * @brief TIM_Base MSP De-Initialization
-  * This function freeze the hardware resources used in this example
-  * @param htim_base: TIM_Base handle pointer
-  * @retval None
-  */
-void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
+void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
-  if(htim_base->Instance==ATIM)
+  if(huart->Instance==UART0)
   {
     // Todo
   }

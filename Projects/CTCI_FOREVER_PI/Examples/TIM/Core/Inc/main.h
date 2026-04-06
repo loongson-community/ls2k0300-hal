@@ -1,12 +1,12 @@
 /**
   ******************************************************************************
-  * @file    TIM/Core/Inc/main.h
-  * @author  MCD Application Team
-  * @brief   Header for main.c module
+  * @file           : main.h
+  * @brief          : Header for main.c file.
+  *                   This file contains the common defines of the application.
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2016 STMicroelectronics.
+  * Copyright (c) 2026 Ilikara <3435193369@qq.com>
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -20,13 +20,22 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include "ls2k03xx_hal.h"
-
-
+/* Private includes ----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
+/* Exported functions prototypes ---------------------------------------------*/
+void Error_Handler(void);
+/* Private defines -----------------------------------------------------------*/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MAIN_H */

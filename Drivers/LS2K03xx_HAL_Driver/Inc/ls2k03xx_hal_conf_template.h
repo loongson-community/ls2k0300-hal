@@ -66,6 +66,10 @@ extern "C" {
   */
 #define  USE_RTOS                     0U
 
+#define  USE_HAL_ADC_REGISTER_CALLBACKS         0U /* ADC register callback disabled       */
+#define  USE_HAL_I2C_REGISTER_CALLBACKS         0U /* I2C register callback disabled       */
+#define  USE_HAL_SPI_FLASH_REGISTER_CALLBACKS   0U /* SPI-Flash register callback disabled */
+#define  USE_HAL_SPI_IO_REGISTER_CALLBACKS      0U /* SPI-IO register callback disabled    */
 #define  USE_HAL_TIM_REGISTER_CALLBACKS         0U /* TIM register callback disabled       */
 #define  USE_HAL_UART_REGISTER_CALLBACKS        0U /* UART register callback disabled      */
 
