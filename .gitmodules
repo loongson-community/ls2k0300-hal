@@ -1,0 +1,3 @@
+[submodule "Projects/CTCI_FOREVER_PI/Examples/FutureComposer"]
+	path = Projects/CTCI_FOREVER_PI/Examples/FutureComposer
+	url = https://github.com/AirFortressIlikara/FutureComposerLS2K.git
