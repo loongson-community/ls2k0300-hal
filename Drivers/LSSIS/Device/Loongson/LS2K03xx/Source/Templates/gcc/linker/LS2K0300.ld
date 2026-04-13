@@ -3,7 +3,7 @@ ENTRY(Reset_Handler)
 OUTPUT_ARCH("loongarch")
 
 /* Highest address of the user mode stack */
-_estack = 0x900000009003FFFF;   /* end of RAM */
+_estack = 0x900000000303FFFF;   /* end of RAM */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x200;         /* required amount of heap  */
@@ -12,8 +12,8 @@ _Min_Stack_Size = 0x400;        /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-FLASH (rx)      : ORIGIN = 0x9000000003000000, LENGTH = 1M
-RAM (xrw)       : ORIGIN = 0x9000000004000000, LENGTH = 256K
+FLASH (rx)      : ORIGIN = 0x9000000003000000, LENGTH = 128K
+RAM (xrw)       : ORIGIN = 0x9000000003020000, LENGTH = 128K
 }
 
 /* Define output sections */
@@ -22,6 +22,7 @@ SECTIONS
     /* The program code and other data goes into FLASH */
     .text :
     {
+	    __image_copy_start = .;
         . = ALIGN(4);
         KEEP(*(.text.Reset_Handler))
         *(.text)           /* .text sections (code) */
@@ -96,6 +97,7 @@ SECTIONS
 		_sgot = .;
 		*(.got*)
 		_egot = .;
+	    __image_copy_end =  LOADADDR(.got) + SIZEOF(.got);
 	} > RAM AT > FLASH
 
     /* Uninitialized data section */

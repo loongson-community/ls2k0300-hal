@@ -25,6 +25,7 @@ set(Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../Core/Src/ls2k03xx_it.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../Core/Src/ls2k03xx_hal_msp.c
     ${LSSIS_ROOT}/Device/Loongson/LS2K03xx/Source/Templates/gcc/startup_ls2k0300.S
+    ${LSSIS_ROOT}/Device/Loongson/LS2K03xx/Source/Templates/gcc/lowlevel_init_ls2k0300.S
     ${LSSIS_ROOT}/Device/Loongson/LS2K03xx/Source/Templates/gcc/exception_ls2k0300.S
 )
 

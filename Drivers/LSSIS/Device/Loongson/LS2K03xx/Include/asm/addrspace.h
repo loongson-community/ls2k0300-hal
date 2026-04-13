@@ -29,7 +29,7 @@
 #define BOOT_SPACE_BASE_CACHED		PHYS_TO_CACHED(BOOT_SPACE_BASE)
 
 // 如果用 PHYS_TO_CACHED 会在configs/loongson_common.h mach-loongson/spl.c 编译报错
-#define LOCK_CACHE_BASE			(CACHED_MEMORY_ADDR | (HIGH_MEM_ENTRY_ADDR + SZ_256M))
+#define LOCK_CACHE_BASE			(CACHED_MEMORY_ADDR | (0x03000000))
 #define LOCK_CACHE_SIZE			(SZ_256K)
 
 #include <linux/sizes.h>

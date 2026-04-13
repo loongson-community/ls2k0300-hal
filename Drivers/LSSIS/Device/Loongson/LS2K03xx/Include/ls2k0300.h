@@ -42,6 +42,9 @@
 extern "C" {
 #endif
 
+#include "asm/addrspace.h"
+
+#ifndef __ASSEMBLY__
 /** @addtogroup Peripheral_interrupt_number_definition
   * @{
   */
@@ -373,7 +376,7 @@ typedef struct
   __IO uint32_t INSTA;
 } TIM_TypeDef;
 
-/** 
+/**
   * @brief Universal Asynchronous Receiver Transmitter (16550A-like)
   */
 
@@ -391,31 +394,72 @@ typedef struct
 /**
   * @}
   */
+#endif /* __ASSEMBLY__ */
 
 /** @addtogroup Peripheral_memory_map
   * @{
   */
 
-#define PERIPH_BASE           0x8000000000000000ULL
+#define PERIPH_BASE           0x8000000000000000
+
+/* CHIP CONFIG regs */
+#define LS_GENERAL_CFG0           PHYS_TO_UNCACHED(0x16000100)
+#define LS_GENERAL_CFG1				    PHYS_TO_UNCACHED(0x16000104)
+#define LS_GENERAL_CFG2				    PHYS_TO_UNCACHED(0x16000108)
+#define LS_GENERAL_CFG3				    PHYS_TO_UNCACHED(0x1600010c)
+#define LS_GENERAL_CFG4				    PHYS_TO_UNCACHED(0x16000110)
+#define LS_GENERAL_CFG5				    PHYS_TO_UNCACHED(0x16000114)
+#define LS_GENERAL_CFG6				    PHYS_TO_UNCACHED(0x16000118)
+#define LS_GENERAL_CFG7				    PHYS_TO_UNCACHED(0x1600011c)
+#define LS_GENERAL_CFG8				    PHYS_TO_UNCACHED(0x16000120)
+#define LS_GENERAL_CFG9				    PHYS_TO_UNCACHED(0x16000124)
+#define LS_GENERAL_CFG10			    PHYS_TO_UNCACHED(0x16000128)
+#define LS_GENERAL_CFG11			    PHYS_TO_UNCACHED(0x1600012c)
+#define LS_GENERAL_CFG12			    PHYS_TO_UNCACHED(0x16000130)
+#define LS_GENERAL_CFG13			    PHYS_TO_UNCACHED(0x16000134)
+#define LS_GENERAL_CFG14			    PHYS_TO_UNCACHED(0x16000138)
+#define LS_GENERAL_CFG15			    PHYS_TO_UNCACHED(0x1600013c)
+#define LS_SAMPLE_CFG0				    PHYS_TO_UNCACHED(0x16000140)
+#define LS_SAMPLE_CFG1				    PHYS_TO_UNCACHED(0x16000144)
+#define LS_SAMPLE_CFG2				    PHYS_TO_UNCACHED(0x16000148)
+#define LS_SAMPLE_CFG3				    PHYS_TO_UNCACHED(0x1600014c)
+#define LS_CHIP_HPT_LO				    PHYS_TO_UNCACHED(0x16000150)
+#define LS_CHIP_HPT_HI				    PHYS_TO_UNCACHED(0x16000154)
+
+#define LS_SCACHE_LOCK_WIN0_BASE  PHYS_TO_UNCACHED(0x16000200)
+#define LS_SCACHE_LOCK_WIN1_BASE  PHYS_TO_UNCACHED(0x16000208)
+#define LS_SCACHE_LOCK_WIN2_BASE  PHYS_TO_UNCACHED(0x16000210)
+#define LS_SCACHE_LOCK_WIN3_BASE  PHYS_TO_UNCACHED(0x16000218)
+#define LS_SCACHE_LOCK_WIN0_MASK  PHYS_TO_UNCACHED(0x16000240)
+#define LS_SCACHE_LOCK_WIN1_MASK  PHYS_TO_UNCACHED(0x16000248)
+#define LS_SCACHE_LOCK_WIN2_MASK  PHYS_TO_UNCACHED(0x16000250)
+#define LS_SCACHE_LOCK_WIN3_MASK  PHYS_TO_UNCACHED(0x16000258)
+
+#define LS_NODE_PLL_L				      PHYS_TO_UNCACHED(0x16000400)
+#define LS_NODE_PLL_H				      PHYS_TO_UNCACHED(0x16000404)
+#define LS_DDR_PLL_L				      PHYS_TO_UNCACHED(0x16000408)
+#define LS_DDR_PLL_H				      PHYS_TO_UNCACHED(0x1600040c)
+#define LS_PIX0_PLL				        PHYS_TO_UNCACHED(0x16000410)
+#define LS_PIX1_PLL				        PHYS_TO_UNCACHED(0x16000414)
+#define LS_FREQ_SCALE				      PHYS_TO_UNCACHED(0x16000420)
 
 /*!< Peripheral memory map */
-#define PWM_BASE              (PERIPH_BASE + 0x1611b000ULL)
-#define PWM0_BASE             (PWM_BASE + 0x00ULL)
-#define PWM1_BASE             (PWM_BASE + 0x10ULL)
-#define PWM2_BASE             (PWM_BASE + 0x20ULL)
-#define PWM3_BASE             (PWM_BASE + 0x30ULL)
+#define PWM0_BASE                 PHYS_TO_UNCACHED(0x1611b000)
+#define PWM1_BASE                 PHYS_TO_UNCACHED(0x1611b010)
+#define PWM2_BASE                 PHYS_TO_UNCACHED(0x1611b020)
+#define PWM3_BASE                 PHYS_TO_UNCACHED(0x1611b030)
 
-#define ADC_BASE              (PERIPH_BASE + 0x1611c000ULL)
+#define ADC_BASE                  PHYS_TO_UNCACHED(0x1611c000)
 
-#define DMA_BASE              (PERIPH_BASE + 0x1612c000ULL)
-#define DMA_Channel0_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 0)
-#define DMA_Channel1_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 1)
-#define DMA_Channel2_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 2)
-#define DMA_Channel3_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 3)
-#define DMA_Channel4_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 4)
-#define DMA_Channel5_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 5)
-#define DMA_Channel6_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 6)
-#define DMA_Channel7_BASE     (DMA_BASE + 0x08ULL + 0x14ULL * 7)
+#define DMA_BASE                  PHYS_TO_UNCACHED(0x1612c000)
+#define DMA_Channel0_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 0)
+#define DMA_Channel1_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 1)
+#define DMA_Channel2_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 2)
+#define DMA_Channel3_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 3)
+#define DMA_Channel4_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 4)
+#define DMA_Channel5_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 5)
+#define DMA_Channel6_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 6)
+#define DMA_Channel7_BASE         PHYS_TO_UNCACHED(0x1612c000 + 0x08 + 0x14 * 7)
 
 #define GPIO_BASE             (PERIPH_BASE + 0x16104000ULL)
 #define GPIO_BIT_BASE         (GPIO_BASE + 0x000ULL)
@@ -437,9 +481,8 @@ typedef struct
 
 #define RTC_BASE              (PERIPH_BASE + 0x16128000ULL)
 
-#define SPI_FLASE_BASE        (PERIPH_BASE + 0x16010000ULL)
-#define SPI0_BASE             (SPI_FLASE_BASE + 0x0000ULL)
-#define SPI1_BASE             (SPI_FLASE_BASE + 0x8000ULL)
+#define SPI0_BASE                 PHYS_TO_UNCACHED(0x16010000)
+#define SPI1_BASE                 PHYS_TO_UNCACHED(0x16018000)
 
 #define SPI_IO_BASE           (PERIPH_BASE + 0x1610c000ULL)
 #define SPI2_BASE             (SPI_IO_BASE + 0x0000ULL)
@@ -465,6 +508,8 @@ typedef struct
   * @}
   */
 
+
+#ifndef __ASSEMBLY__
 /** @addtogroup Peripheral_declaration
   * @{
   */
@@ -530,6 +575,7 @@ typedef struct
 /**
   * @}
   */
+#endif /* __ASSEMBLY__ */
 
 /** @addtogroup Exported_constants
   * @{
@@ -538,6 +584,58 @@ typedef struct
 /** @addtogroup Peripheral_Registers_Bits_Definition
   * @{
   */
+
+// PLL
+
+
+#define NODE_L1DIV_OUT_SHIFT        24
+#define NODE_L1DIV_LOOPC_SHIFT      15
+#define NODE_L1DIV_REF_SHIFT        8
+#define NODE_L1DIV_OUT_WIDTH        7
+#define NODE_L1DIV_LOOPC_WIDTH      9
+#define NODE_L1DIV_REF_WIDTH        7
+#define NODE_L1DIV_OUT_MARK         0x7f
+#define NODE_L1DIV_LOOPC_MARK       0x1ff
+#define NODE_L1DIV_REF_MARK         0x7f
+
+#define NODE_L2DIV_OUT_I2S_SHIFT    8
+#define NODE_L2DIV_OUT_GMAC_SHIFT   0
+#define NODE_L2DIV_OUT_I2S_WIDTH    7
+#define NODE_L2DIV_OUT_GMAC_WIDTH   7
+#define NODE_L2DIV_OUT_I2S_MARK     0x7f
+#define NODE_L2DIV_OUT_GMAC_MARK    0x7f
+
+
+#define DDR_L1DIV_OUT_SHIFT         24
+#define DDR_L1DIV_LOOPC_SHIFT       15
+#define DDR_L1DIV_REF_SHIFT         8
+#define DDR_L1DIV_OUT_WIDTH         7
+#define DDR_L1DIV_LOOPC_WIDTH       9
+#define DDR_L1DIV_REF_WIDTH         7
+#define DDR_L1DIV_OUT_MARK          0x7f
+#define DDR_L1DIV_LOOPC_MARK        0x1ff
+#define DDR_L1DIV_REF_MARK          0x7f
+
+#define DDR_L2DIV_OUT_MEMDIV_SHIFT  18
+#define DDR_L2DIV_OUT_DEV_SHIFT     8
+#define DDR_L2DIV_OUT_NET_SHIFT     0
+#define DDR_L2DIV_OUT_MEMDIV_WIDTH  7
+#define DDR_L2DIV_OUT_DEV_WIDTH     7
+#define DDR_L2DIV_OUT_NET_WIDTH     7
+#define DDR_L2DIV_OUT_MEMDIV_MARK   0x3
+#define DDR_L2DIV_OUT_DEV_MARK      0x7f
+#define DDR_L2DIV_OUT_NET_MARK      0x7f
+
+
+#define PIX_L1DIV_OUT_SHIFT         24
+#define PIX_L1DIV_LOOPC_SHIFT       15
+#define PIX_L1DIV_REF_SHIFT         8
+#define PIX_L1DIV_OUT_WIDTH         7
+#define PIX_L1DIV_LOOPC_WIDTH       9
+#define PIX_L1DIV_REF_WIDTH         7
+#define PIX_L1DIV_OUT_MARK          0x7f
+#define PIX_L1DIV_LOOPC_MARK        0x1ff
+#define PIX_L1DIV_REF_MARK          0x7f
 
 /******************************************************************************/
 /*                                                                            */
